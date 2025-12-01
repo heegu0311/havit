@@ -1,6 +1,9 @@
 import { LinearCalendar2026 } from "./components/LinearCalendar2026.tsx";
+import { useAnalytics } from "./hooks/useAnalytics.js";
 
 export default function App() {
+  useAnalytics();
+
   return (
     <div className="min-h-screen bg-[#FFF5F0] p-4 md:p-8">
       <LinearCalendar2026 />

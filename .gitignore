@@ -3,3 +3,7 @@
 /src/Attributions.md
 
 /node_modules
+
+/build
+
+.env.local
