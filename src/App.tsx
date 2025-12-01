@@ -1,4 +1,4 @@
-import { LinearCalendar2026 } from "./components/LinearCalendar2026";
+import { LinearCalendar2026 } from "./components/LinearCalendar2026.tsx";
 
 export default function App() {
   return (
