@@ -9,8 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     sitemap({
-      hostname: "https://yourdomain.com", // 본인의 도메인 입력
-      // 경로 수동 추가 가능
+      hostname: "https://havit.online",
     }),
   ],
   resolve: {
