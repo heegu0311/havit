@@ -267,14 +267,6 @@ export function LinearCalendar2026() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={exportToPDF}
-            className="no-print flex items-center gap-2 px-4 py-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF5535] transition-colors"
-            title="Export to PDF"
-          >
-            <Download className="w-5 h-5" />
-            <span className="hidden md:inline">Export PDF</span>
-          </button>
           <Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />
         </div>
       </div>
