@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://havit.online/sitemap.xml
