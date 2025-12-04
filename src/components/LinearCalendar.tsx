@@ -469,23 +469,57 @@ export function LinearCalendar() {
                     ? isDateSelected(monthIndex, day)
                     : false;
 
+                  // 이전/다음 셀의 선택 상태 확인
+                  const prevDay = i > 0 ? monthDays[i - 1] : null;
+                  const nextDay = i < maxCells - 1 ? monthDays[i + 1] : null;
+                  const isPrevSelected =
+                    prevDay != null && isDateSelected(monthIndex, prevDay);
+                  const isNextSelected =
+                    nextDay != null && isDateSelected(monthIndex, nextDay);
+
+                  // 선택된 셀의 모양 결정
+                  let selectedShapeClasses = "";
+                  if (isSelected) {
+                    if (!isPrevSelected && !isNextSelected) {
+                      // 단독 하루
+                      selectedShapeClasses = "rounded-full";
+                    } else if (!isPrevSelected && isNextSelected) {
+                      // 구간의 시작
+                      selectedShapeClasses = "rounded-l-full";
+                    } else if (isPrevSelected && !isNextSelected) {
+                      // 구간의 끝
+                      selectedShapeClasses = "rounded-r-full";
+                    } else if (isPrevSelected && isNextSelected) {
+                      // 구간의 중간
+                      selectedShapeClasses = "rounded-none";
+                    }
+                  }
+
+                  const baseClickable = day
+                    ? "cursor-pointer hover:bg-gray-100 transition-colors"
+                    : "";
+
+                  const textColor = isSelected
+                    ? "text-white"
+                    : day
+                      ? isWeekend
+                        ? "text-[#FF6B4A]"
+                        : "text-gray-700"
+                      : "";
+
                   return (
                     <div
                       key={i}
                       onClick={() => day && toggleDate(monthIndex, day)}
-                      className={`text-center py-2 text-sm ${
-                        day
-                          ? "cursor-pointer hover:bg-gray-100 transition-colors"
-                          : ""
-                      } ${
-                        isSelected
-                          ? "bg-[#FF6B4A] text-white rounded-full"
-                          : day
-                            ? isWeekend
-                              ? "text-[#FF6B4A]"
-                              : "text-gray-700"
-                            : ""
-                      }`}
+                      className={[
+                        "text-center py-2 text-sm",
+                        baseClickable,
+                        textColor,
+                        isSelected ? "bg-[#FF6B4A]" : "hover:rounded-full",
+                        selectedShapeClasses,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
                       {day || ""}
                     </div>
@@ -569,7 +603,7 @@ export function LinearCalendar() {
 
       {/* Footer */}
       <div className="mt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-2">
-        <span>Linear Calendar • 2026 • 12 months • Habit Tracker</span>
+        <span>Linear Calendar • {year} • 12 months • Habit Tracker</span>
         <span className="text-[#FF6B4A]">
           {selectedDates.size} {selectedDates.size === 1 ? "day" : "days"}{" "}
           tracked • Make it a wonderful year
