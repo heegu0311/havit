@@ -1,4 +1,4 @@
-import { LinearCalendar2026 } from "./components/LinearCalendar2026";
+import { LinearCalendar } from "./components/LinearCalendar.js";
 import { useAnalytics } from "./hooks/useAnalytics.js";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import ClarityInitializer from "./components/Clarity.js";
@@ -19,7 +19,7 @@ export default function App() {
       </Helmet>
       <ClarityInitializer />
       <div className="min-h-screen bg-[#FFF5F0] p-4 md:p-8">
-        <LinearCalendar2026 />
+        <LinearCalendar year={2025} />
       </div>
     </HelmetProvider>
   );

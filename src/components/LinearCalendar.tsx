@@ -7,8 +7,11 @@ interface Habit {
   selectedDates: string[];
 }
 
-export function LinearCalendar2026() {
-  const year = 2026;
+interface LinearCalendarProps {
+  year?: number; // 기본값 2025로 설정
+}
+
+export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
   const months = [
     "January",
     "February",
@@ -41,23 +44,22 @@ export function LinearCalendar2026() {
 
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  // State to manage multiple habits
+  // 로컬스토리지 키도 year 기반으로 변경
   const [habits, setHabits] = useState<Habit[]>(() => {
     try {
-      const saved = localStorage.getItem("habit-tracker-2026-habits");
+      const saved = localStorage.getItem(`habit-tracker-${year}-habits`);
       if (saved) {
         return JSON.parse(saved);
       }
     } catch (error) {
       console.error("Error loading habits from localStorage:", error);
     }
-    // Default: one empty habit
     return [{ id: "1", title: "", selectedDates: [] }];
   });
 
-  const [activeHabitId, setActiveHabitId] = useState<string>(() => {
+  const [activeHabitId, setActiveHabitId] = useState(() => {
     try {
-      const saved = localStorage.getItem("habit-tracker-2026-active");
+      const saved = localStorage.getItem(`habit-tracker-${year}-active`);
       return saved || "1";
     } catch (error) {
       console.error("Error loading active habit:", error);
@@ -65,23 +67,24 @@ export function LinearCalendar2026() {
     }
   });
 
-  // Save habits to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem("habit-tracker-2026-habits", JSON.stringify(habits));
+      localStorage.setItem(
+        `habit-tracker-${year}-habits`,
+        JSON.stringify(habits),
+      );
     } catch (error) {
       console.error("Error saving habits to localStorage:", error);
     }
-  }, [habits]);
+  }, [habits, year]);
 
-  // Save active habit to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem("habit-tracker-2026-active", activeHabitId);
+      localStorage.setItem(`habit-tracker-${year}-active`, activeHabitId);
     } catch (error) {
       console.error("Error saving active habit to localStorage:", error);
     }
-  }, [activeHabitId]);
+  }, [activeHabitId, year]);
 
   // Get current active habit
   const activeHabit = habits.find((h) => h.id === activeHabitId) || habits[0];
@@ -261,7 +264,7 @@ export function LinearCalendar2026() {
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-[#FF6B4A] text-4xl md:text-7xl mb-2">2026</h1>
+          <h1 className="text-[#FF6B4A] text-4xl md:text-7xl mb-2">{year}</h1>
           <p className="text-[#FF6B4A] text-xs md:text-sm hidden md:block">
             {monthsShort.join(" • ")}
           </p>
@@ -413,7 +416,7 @@ export function LinearCalendar2026() {
 
       {/* Footer */}
       <div className="mt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-2">
-        <span>Linear Calendar • 2026 • 12 months • Habit Tracker</span>
+        <span>Linear Calendar • {year} • 12 months • Habit Tracker</span>
         <span className="text-[#FF6B4A]">
           {selectedDates.size} {selectedDates.size === 1 ? "day" : "days"}{" "}
           tracked • Make it a wonderful year
