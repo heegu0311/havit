@@ -1,4 +1,12 @@
-import { Smile, Plus, X, Download } from "lucide-react";
+import {
+  Smile,
+  Plus,
+  X,
+  Copy,
+  ChevronDown,
+  Check,
+  ClipboardPaste,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface Habit {
@@ -7,11 +15,14 @@ interface Habit {
   selectedDates: string[];
 }
 
-interface LinearCalendarProps {
-  year?: number; // 기본값 2025로 설정
-}
+export function LinearCalendar() {
+  const [selectedYear, setSelectedYear] = useState(2026);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [copiedData, setCopiedData] = useState(false);
 
-export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
+  const year = selectedYear;
+  const availableYears = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+
   const months = [
     "January",
     "February",
@@ -44,22 +55,23 @@ export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
 
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  // 로컬스토리지 키도 year 기반으로 변경
+  // State to manage multiple habits
   const [habits, setHabits] = useState<Habit[]>(() => {
     try {
-      const saved = localStorage.getItem(`habit-tracker-${year}-habits`);
+      const saved = localStorage.getItem("habit-tracker-2026-habits");
       if (saved) {
         return JSON.parse(saved);
       }
     } catch (error) {
       console.error("Error loading habits from localStorage:", error);
     }
+    // Default: one empty habit
     return [{ id: "1", title: "", selectedDates: [] }];
   });
 
-  const [activeHabitId, setActiveHabitId] = useState(() => {
+  const [activeHabitId, setActiveHabitId] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem(`habit-tracker-${year}-active`);
+      const saved = localStorage.getItem("habit-tracker-2026-active");
       return saved || "1";
     } catch (error) {
       console.error("Error loading active habit:", error);
@@ -67,24 +79,23 @@ export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
     }
   });
 
+  // Save habits to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(
-        `habit-tracker-${year}-habits`,
-        JSON.stringify(habits),
-      );
+      localStorage.setItem("habit-tracker-2026-habits", JSON.stringify(habits));
     } catch (error) {
       console.error("Error saving habits to localStorage:", error);
     }
-  }, [habits, year]);
+  }, [habits]);
 
+  // Save active habit to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(`habit-tracker-${year}-active`, activeHabitId);
+      localStorage.setItem("habit-tracker-2026-active", activeHabitId);
     } catch (error) {
       console.error("Error saving active habit to localStorage:", error);
     }
-  }, [activeHabitId, year]);
+  }, [activeHabitId]);
 
   // Get current active habit
   const activeHabit = habits.find((h) => h.id === activeHabitId) || habits[0];
@@ -178,6 +189,81 @@ export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
     window.print();
   };
 
+  // Copy habit data to clipboard
+  const copyHabitData = async () => {
+    try {
+      const exportData = {
+        habits,
+        activeHabitId,
+        exportDate: new Date().toISOString(),
+        version: "1.0",
+      };
+      const dataString = JSON.stringify(exportData, null, 2);
+
+      // Fallback method using textarea for better browser compatibility
+      const textarea = document.createElement("textarea");
+      textarea.value = dataString;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand("copy");
+        setCopiedData(true);
+        setTimeout(() => setCopiedData(false), 2000);
+      } catch (err) {
+        console.error("Fallback copy failed:", err);
+        // Show the data in an alert as last resort
+        prompt("Copy this data manually (Ctrl+C/Cmd+C):", dataString);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    } catch (error) {
+      console.error("Error copying data:", error);
+      alert("Failed to copy data to clipboard");
+    }
+  };
+
+  // Paste habit data from clipboard
+  const pasteHabitData = async () => {
+    try {
+      // Use prompt as fallback for better browser compatibility
+      const pastedText = prompt("Paste your habit data here:");
+
+      if (!pastedText) {
+        return; // User cancelled
+      }
+
+      const importData = JSON.parse(pastedText);
+
+      // Validate the data structure
+      if (!importData.habits || !Array.isArray(importData.habits)) {
+        throw new Error("Invalid data format");
+      }
+
+      // Confirm before overwriting
+      const confirm = window.confirm(
+        `This will replace your current ${habits.length} habit${habits.length > 1 ? "s" : ""} with ${importData.habits.length} imported habit${importData.habits.length > 1 ? "s" : ""}. Continue?`,
+      );
+
+      if (!confirm) {
+        return;
+      }
+
+      // Import the data
+      setHabits(importData.habits);
+      setActiveHabitId(importData.activeHabitId || importData.habits[0].id);
+
+      alert("Habit data imported successfully!");
+    } catch (error) {
+      console.error("Error pasting data:", error);
+      alert(
+        "Failed to import data. Please make sure you copied the data correctly.",
+      );
+    }
+  };
+
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
@@ -263,14 +349,79 @@ export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
 
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-[#FF6B4A] text-4xl md:text-7xl mb-2">{year}</h1>
-          <p className="text-[#FF6B4A] text-xs md:text-sm hidden md:block">
-            {monthsShort.join(" • ")}
+        <div className="flex items-center gap-4">
+          {/* Year Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setShowYearDropdown(!showYearDropdown)}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF6B4A] to-[#FF8A6E] text-white rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              <span className="text-2xl md:text-4xl font-bold">
+                {selectedYear}
+              </span>
+              <ChevronDown
+                className={`w-5 h-5 transition-transform duration-300 ${showYearDropdown ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {showYearDropdown && (
+              <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-10 min-w-[120px]">
+                {availableYears.map((yr) => (
+                  <button
+                    key={yr}
+                    onClick={() => {
+                      setSelectedYear(yr);
+                      setShowYearDropdown(false);
+                    }}
+                    className={`w-full px-6 py-2 text-left hover:bg-[#FFF5F3] transition-colors ${
+                      yr === selectedYear
+                        ? "bg-[#FFF5F3] text-[#FF6B4A]"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="text-[#FF6B4A] text-xs md:text-sm hidden lg:block">
+            {months.join(" • ")}
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />
+
+        <div className="flex items-center gap-3">
+          {/* Copy Data Button */}
+          <button
+            onClick={copyHabitData}
+            className="flex items-center gap-2 px-4 py-2 border-2 border-[#FF6B4A] text-[#FF6B4A] rounded-lg hover:bg-[#FFF5F3] transition-all duration-300"
+            title="Copy habit data to transfer between browsers"
+          >
+            {copiedData ? (
+              <>
+                <Check className="w-5 h-5" />
+                <span className="hidden md:inline">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-5 h-5" />
+                <span className="hidden md:inline">Copy Data</span>
+              </>
+            )}
+          </button>
+
+          {/* Paste Data Button */}
+          <button
+            onClick={pasteHabitData}
+            className="flex items-center gap-2 px-4 py-2 border-2 border-[#FF6B4A] text-[#FF6B4A] rounded-lg hover:bg-[#FFF5F3] transition-all duration-300"
+            title="Paste habit data from clipboard"
+          >
+            <ClipboardPaste className="w-5 h-5" />
+            <span className="hidden md:inline">Paste Data</span>
+          </button>
+
+          {/*<Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />*/}
         </div>
       </div>
 
@@ -322,11 +473,13 @@ export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
                     <div
                       key={i}
                       onClick={() => day && toggleDate(monthIndex, day)}
-                      className={`text-center py-2 text-sm rounded-full ${
-                        day ? "cursor-pointer transition-colors" : ""
+                      className={`text-center py-2 text-sm ${
+                        day
+                          ? "cursor-pointer hover:bg-gray-100 transition-colors"
+                          : ""
                       } ${
                         isSelected
-                          ? "bg-[#FF6B4A] text-white"
+                          ? "bg-[#FF6B4A] text-white rounded-full"
                           : day
                             ? isWeekend
                               ? "text-[#FF6B4A]"
@@ -416,7 +569,7 @@ export function LinearCalendar({ year = 2025 }: LinearCalendarProps) {
 
       {/* Footer */}
       <div className="mt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-2">
-        <span>Linear Calendar • {year} • 12 months • Habit Tracker</span>
+        <span>Linear Calendar • 2026 • 12 months • Habit Tracker</span>
         <span className="text-[#FF6B4A]">
           {selectedDates.size} {selectedDates.size === 1 ? "day" : "days"}{" "}
           tracked • Make it a wonderful year
