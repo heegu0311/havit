@@ -16,7 +16,7 @@ interface Habit {
 }
 
 export function LinearCalendar() {
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [copiedData, setCopiedData] = useState(false);
 
