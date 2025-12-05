@@ -110,7 +110,7 @@ export function LinearCalendar() {
 
   // Add new habit
   const addHabit = () => {
-    if (habits.length >= 3) return;
+    if (habits.length >= 5) return;
     const newHabit: Habit = {
       id: Date.now().toString(),
       title: "",
@@ -325,7 +325,7 @@ export function LinearCalendar() {
             </span>
           </button>
         ))}
-        {habits.length < 3 && (
+        {habits.length < 5 && (
           <button
             onClick={addHabit}
             className="px-4 py-3 text-gray-400 hover:text-[#FF6B4A] transition-colors"
