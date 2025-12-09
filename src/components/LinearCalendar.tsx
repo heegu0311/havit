@@ -301,7 +301,7 @@ export function LinearCalendar() {
   return (
     <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
       {/* Habit Tabs */}
-      <div className="mb-6 flex items-center gap-2 border-b-2 border-gray-200">
+      <div className="mb-6 flex items-center gap-2 border-b-2 border-gray-200 overflow-x-auto overflow-y-hidden">
         {habits.map((habit, index) => (
           <button
             key={habit.id}
@@ -312,7 +312,7 @@ export function LinearCalendar() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 whitespace-nowrap">
               {habit.title || `Habit ${index + 1}`}
               {habits.length > 1 && activeHabitId === habit.id && (
                 <X
