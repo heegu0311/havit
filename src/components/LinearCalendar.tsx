@@ -8,6 +8,7 @@ import {
   ClipboardPaste,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { getSelectedShapeClasses } from "../utils/calendar.ts";
 
 interface Habit {
   id: string;
@@ -464,36 +465,18 @@ export function LinearCalendar() {
               <div className="flex-1 grid grid-cols-37 gap-px">
                 {Array.from({ length: maxCells }, (_, i) => {
                   const day = monthDays[i];
-                  const isWeekend = i % 7 >= 5; // Saturday or Sunday
+                  const isWeekend = i % 7 >= 5;
                   const isSelected = day
                     ? isDateSelected(monthIndex, day)
                     : false;
 
-                  // 이전/다음 셀의 선택 상태 확인
-                  const prevDay = i > 0 ? monthDays[i - 1] : null;
-                  const nextDay = i < maxCells - 1 ? monthDays[i + 1] : null;
-                  const isPrevSelected =
-                    prevDay != null && isDateSelected(monthIndex, prevDay);
-                  const isNextSelected =
-                    nextDay != null && isDateSelected(monthIndex, nextDay);
-
-                  // 선택된 셀의 모양 결정
-                  let selectedShapeClasses = "";
-                  if (isSelected) {
-                    if (!isPrevSelected && !isNextSelected) {
-                      // 단독 하루
-                      selectedShapeClasses = "rounded-full";
-                    } else if (!isPrevSelected && isNextSelected) {
-                      // 구간의 시작
-                      selectedShapeClasses = "rounded-l-full";
-                    } else if (isPrevSelected && !isNextSelected) {
-                      // 구간의 끝
-                      selectedShapeClasses = "rounded-r-full";
-                    } else if (isPrevSelected && isNextSelected) {
-                      // 구간의 중간
-                      selectedShapeClasses = "rounded-none";
-                    }
-                  }
+                  const selectedShapeClasses = getSelectedShapeClasses(
+                    monthDays,
+                    monthIndex,
+                    i,
+                    maxCells,
+                    isDateSelected,
+                  );
 
                   const baseClickable = day
                     ? "cursor-pointer hover:bg-gray-100 transition-colors"
@@ -508,7 +491,7 @@ export function LinearCalendar() {
                       : "";
 
                   return (
-                    <div
+                    <button
                       key={i}
                       onClick={() => day && toggleDate(monthIndex, day)}
                       className={[
@@ -522,7 +505,7 @@ export function LinearCalendar() {
                         .join(" ")}
                     >
                       {day || ""}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -566,33 +549,50 @@ export function LinearCalendar() {
               </div>
 
               {/* Days grid */}
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-0.5">
+                {/* Days grid (Mobile) */}
                 {monthDays.map((day, index) => {
                   const isWeekend = index % 7 >= 5;
                   const isSelected = day
                     ? isDateSelected(monthIndex, day)
                     : false;
 
+                  const selectedShapeClasses = getSelectedShapeClasses(
+                    monthDays,
+                    monthIndex,
+                    index,
+                    monthDays.length, // 모바일은 monthDays 길이 기준
+                    isDateSelected,
+                  );
+
+                  const baseClickable = day
+                    ? "cursor-pointer hover:bg-gray-100 transition-colors"
+                    : "";
+
+                  const textColor = isSelected
+                    ? "text-white"
+                    : day
+                      ? isWeekend
+                        ? "text-[#FF6B4A]"
+                        : "text-gray-700"
+                      : "";
+
                   return (
-                    <div
+                    <button
                       key={index}
                       onClick={() => day && toggleDate(monthIndex, day)}
-                      className={`text-center py-3 text-sm ${
-                        day
-                          ? "cursor-pointer hover:bg-gray-100 transition-colors rounded-full"
-                          : ""
-                      } ${
-                        isSelected
-                          ? "bg-[#FF6B4A] text-white rounded-full"
-                          : day
-                            ? isWeekend
-                              ? "text-[#FF6B4A]"
-                              : "text-gray-700"
-                            : ""
-                      }`}
+                      className={[
+                        "text-center py-3 text-sm",
+                        baseClickable,
+                        textColor,
+                        isSelected ? "bg-[#FF6B4A]" : "hover:rounded-full",
+                        selectedShapeClasses,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
                       {day || ""}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
