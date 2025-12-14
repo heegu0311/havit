@@ -22,7 +22,7 @@ export function LinearCalendar() {
   const [copiedData, setCopiedData] = useState(false);
 
   const year = selectedYear;
-  const availableYears = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+  const availableYears = [2025, 2026];
 
   const months = [
     "January",
