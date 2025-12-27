@@ -86,13 +86,20 @@ export function useHabitDates(habitId: string | null) {
         .eq("id", existingDate.id);
 
       if (error) throw error;
+      // Update local state immediately
+      setDates((prev) => prev.filter((d) => d.id !== existingDate.id));
     } else {
       // Add date
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("habit_dates")
-        .insert([{ habit_id: habitId, date }]);
+        .insert([{ habit_id: habitId, date }])
+        .select();
 
       if (error) throw error;
+      // Update local state immediately
+      if (data && data.length > 0) {
+        setDates((prev) => [...prev, data[0] as HabitDate]);
+      }
     }
   };
 

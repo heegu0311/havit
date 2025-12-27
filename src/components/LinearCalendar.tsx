@@ -1,6 +1,6 @@
 import { ChevronDown, Database, Plus, X } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useHabitDates } from "../hooks/useHabitDates";
 import { useHabits } from "../hooks/useHabits";
 import { getSelectedShapeClasses } from "../utils/calendar.ts";
@@ -9,6 +9,10 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 export function LinearCalendar() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+
+  // Get data from localStorage
+  const localStorageKey = "habit-tracker-2026-habits";
+  const localDataString = localStorage.getItem(localStorageKey);
 
   const year = selectedYear;
   const availableYears = [2025, 2026];
@@ -56,13 +60,19 @@ export function LinearCalendar() {
     dates: habitDates,
     loading: datesLoading,
     toggleDate: toggleDateInDB,
-    isDateSelected: isDateSelectedInDB,
-    getSelectedDates,
     initializeMonth: initializeMonthInDB,
   } = useHabitDates(activeHabitId);
 
   // Get current active habit
   const activeHabit = habits.find((h) => h.id === activeHabitId);
+
+  // Create a Set of selected dates for fast lookup
+  const selectedDatesSet = useMemo(() => {
+    return new Set(habitDates.map((d) => d.date));
+  }, [habitDates]);
+
+  // Get selected dates count
+  const selectedDatesCount = habitDates.length;
 
   // Update habit title
   const updateHabitTitle = async (title: string) => {
@@ -120,10 +130,10 @@ export function LinearCalendar() {
     }
   };
 
-  // Check if a date is selected
+  // Check if a date is selected (using habitDates for real-time updates)
   const isDateSelected = (monthIndex: number, day: number) => {
     const dateKey = formatDate(year, monthIndex + 1, day);
-    return isDateSelectedInDB(dateKey);
+    return selectedDatesSet.has(dateKey);
   };
 
   // Initialize entire month (fill all dates for a month)
@@ -136,12 +146,15 @@ export function LinearCalendar() {
     }
   };
 
-  // Get selected dates count
-  const selectedDatesCount = getSelectedDates().length;
-
   // Migrate data from localStorage to server
   const migrateLocalStorageData = async () => {
     try {
+      if (
+        !window.confirm("과거 버전 사용하시던 데이터를 동기화하시겠습니까?")
+      ) {
+        return;
+      }
+
       // Get data from localStorage
       const localStorageKey = "habit-tracker-2026-habits";
       const localDataString = localStorage.getItem(localStorageKey);
@@ -209,6 +222,8 @@ export function LinearCalendar() {
         alert(
           `로컬스토리지 데이터를 성공적으로 서버에 저장했습니다! (${successCount}개 습관)`,
         );
+        localStorage.removeItem("habit-tracker-2026-active");
+        localStorage.removeItem(localStorageKey);
       } else {
         alert(
           `일부 데이터를 저장했습니다. 성공: ${successCount}개, 실패: ${errorCount}개`,
@@ -319,7 +334,7 @@ export function LinearCalendar() {
                   className="w-4 h-4 hover:text-red-500"
                   onClick={(e) => {
                     e.stopPropagation();
-                    deleteHabit(habit.id);
+                    void deleteHabit(habit.id);
                   }}
                 />
               )}
@@ -393,21 +408,23 @@ export function LinearCalendar() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Migrate LocalStorage Data Button */}
-          <button
-            onClick={migrateLocalStorageData}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF8A6E] transition-all duration-300"
-            title="기존 로컬스토리지 데이터를 서버에 저장하기"
-          >
-            <Database className="w-5 h-5" />
-            <span className="hidden md:inline">
-              앱 VER.1 데이터 서버에 저장
-            </span>
-          </button>
+        {localDataString && (
+          <div className="flex items-center gap-3">
+            {/* Migrate LocalStorage Data Button */}
+            <button
+              onClick={migrateLocalStorageData}
+              className="flex items-center gap-2 px-4 py-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF8A6E] transition-all duration-300"
+              title="기존 로컬스토리지 데이터를 서버에 저장하기"
+            >
+              <Database className="w-5 h-5" />
+              <span className="hidden md:inline">
+                로그인 시스템 이전 데이터 동기화
+              </span>
+            </button>
 
-          {/*<Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />*/}
-        </div>
+            {/*<Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />*/}
+          </div>
+        )}
       </div>
 
       {/* Desktop View - Linear Calendar */}
@@ -428,7 +445,7 @@ export function LinearCalendar() {
         </div>
 
         {/* Month rows */}
-        {months.map((month, monthIndex) => {
+        {months.map((_, monthIndex) => {
           const monthDays = generateMonthData(monthIndex);
 
           return (
@@ -482,7 +499,7 @@ export function LinearCalendar() {
                         "text-center py-2 text-sm",
                         baseClickable,
                         textColor,
-                        isSelected ? "bg-[#FF6B4A]" : "hover:rounded-full",
+                        isSelected ? "bg-[#FF6B4A]" : "rounded-full",
                         selectedShapeClasses,
                       ]
                         .filter(Boolean)
@@ -589,8 +606,8 @@ export function LinearCalendar() {
       <div className="mt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-2">
         <span>Linear Calendar • {year} • 12 months • Habit Tracker</span>
         <span className="text-[#FF6B4A]">
-          {selectedDatesCount} {selectedDatesCount === 1 ? "일" : "일"} 추적됨 •
-          멋진 한 해 되세요
+          {selectedDatesCount} {selectedDatesCount === 1 ? "day" : "days"}{" "}
+          tracked • Make it a wonderful year
         </span>
       </div>
 
