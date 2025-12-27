@@ -1,15 +1,28 @@
-import { Check, ChevronDown, Copy, Database, Plus, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  Database,
+  LogOut,
+  Plus,
+  X,
+} from "lucide-react";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useHabitDates } from "../hooks/useHabitDates";
 import { useHabits } from "../hooks/useHabits";
+import { useAuth } from "../contexts/AuthContext";
 import { getSelectedShapeClasses } from "../utils/calendar.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
 
-export function LinearCalendar() {
+function LinearCalendar() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [copiedData, setCopiedData] = useState(false);
+  const [localTitle, setLocalTitle] = useState<string>("");
+  // @ts-ignore
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { signOut } = useAuth();
 
   // Get data from localStorage
   const localStorageKey = "habit-tracker-2026-habits";
@@ -67,6 +80,11 @@ export function LinearCalendar() {
   // Get current active habit
   const activeHabit = habits.find((h) => h.id === activeHabitId);
 
+  // Initialize local title when active habit changes
+  useEffect(() => {
+    setLocalTitle(activeHabit?.title || "");
+  }, [activeHabit?.id]);
+
   // Create a Set of selected dates for fast lookup
   const selectedDatesSet = useMemo(() => {
     return new Set(habitDates.map((d) => d.date));
@@ -75,7 +93,7 @@ export function LinearCalendar() {
   // Get selected dates count
   const selectedDatesCount = habitDates.length;
 
-  // Update habit title
+  // Update habit title with debounce
   const updateHabitTitle = async (title: string) => {
     if (!activeHabitId) return;
     try {
@@ -86,11 +104,28 @@ export function LinearCalendar() {
     }
   };
 
+  // Handle title input change with debounce
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setLocalTitle(newTitle);
+
+    // Clear previous timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced update
+    debounceTimeoutRef.current = setTimeout(() => {
+      updateHabitTitle(newTitle).then(() => {});
+    }, 500);
+  };
+
   // Add new habit
   const addHabit = async () => {
     if (habits.length >= 5) return;
     try {
-      const newHabit = await createHabit("도서관 가기");
+      const newHabit = await createHabit(`Habit ${habits.length + 1}`);
+      // Automatically switch to the newly created habit tab
       setActiveHabitId(newHabit.id);
     } catch (error) {
       console.error("Error creating habit:", error);
@@ -355,50 +390,67 @@ export function LinearCalendar() {
 
   return (
     <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
-      {/* Habit Tabs */}
-      <div className="mb-6 flex items-center gap-2 border-b-2 border-gray-200 overflow-x-auto overflow-y-hidden">
-        {habits.map((habit, index) => (
-          <button
-            key={habit.id}
-            onClick={() => setActiveHabitId(habit.id)}
-            className={`relative px-6 py-3 transition-all ${
-              activeHabitId === habit.id
-                ? "text-[#FF6B4A] border-b-2 border-[#FF6B4A] -mb-[2px]"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <span className="flex items-center gap-2 whitespace-nowrap">
-              {habit.title || `Habit ${index + 1}`}
-              {habits.length > 1 && activeHabitId === habit.id && (
-                <X
-                  className="w-4 h-4 hover:text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void deleteHabit(habit.id);
-                  }}
-                />
-              )}
-            </span>
-          </button>
-        ))}
-        {habits.length < 5 && (
-          <button
-            onClick={addHabit}
-            className="px-4 py-3 text-gray-400 hover:text-[#FF6B4A] transition-colors"
-            title="Add new habit"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-        )}
+      <div className="flex justify-between gap-4 items-center mb-6 md:mb-10 print-hide">
+        {/* Habit Tabs */}
+        <div className="flex-1 flex items-center gap-2 border-b-1 border-gray-200 overflow-x-auto overflow-y-hidden">
+          {habits.map((habit, index) => (
+            <button
+              key={habit.id}
+              onClick={() => setActiveHabitId(habit.id)}
+              className={`relative px-6 py-3 transition-all ${
+                activeHabitId === habit.id
+                  ? "text-[#FF6B4A] border-b-2 border-[#FF6B4A] -mb-[2px]"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                {habit.title || `Habit ${index + 1}`}
+                {habits.length > 1 && activeHabitId === habit.id && (
+                  <X
+                    className="w-4 h-4 hover:text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void deleteHabit(habit.id);
+                    }}
+                  />
+                )}
+              </span>
+            </button>
+          ))}
+          {habits.length < 5 && (
+            <button
+              onClick={addHabit}
+              className="px-4 py-3 text-gray-400 hover:text-[#FF6B4A] transition-colors"
+              title="Add new habit"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+        {/* Logout Button */}
+        <button
+          onClick={signOut}
+          className="flex items-center gap-2 px-4 py-2 border-0 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
+          title="로그아웃"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="text-sm hidden md:inline">Logout</span>
+        </button>
       </div>
 
       {/* Habit Title Input */}
       <div className="mb-6">
         <input
           type="text"
-          value={activeHabit?.title || ""}
-          onChange={(e) => updateHabitTitle(e.target.value)}
-          onBlur={(e) => updateHabitTitle(e.target.value)}
+          value={localTitle}
+          onChange={handleTitleChange}
+          onBlur={() => {
+            // Ensure any pending debounced update is executed
+            if (debounceTimeoutRef.current) {
+              clearTimeout(debounceTimeoutRef.current);
+              updateHabitTitle(localTitle);
+            }
+          }}
           placeholder="습관 목표를 입력하세요 (예: 매일 운동하기, 독서하기, 명상하기...)"
           className="w-full text-2xl md:text-4xl text-center text-[#FF6B4A] border-b-2 border-transparent hover:border-gray-200 focus:border-[#FF6B4A] focus:outline-none transition-colors py-2 placeholder-gray-300"
         />
@@ -703,3 +755,5 @@ export function LinearCalendar() {
     </div>
   );
 }
+
+export default LinearCalendar;

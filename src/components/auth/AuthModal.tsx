@@ -47,7 +47,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 },
               },
             }}
-            providers={["google", "github"]}
+            providers={["google"]}
             localization={{
               variables: {
                 sign_in: {

@@ -88,7 +88,11 @@ export function useHabits() {
       .single();
 
     if (error) throw error;
-    return data;
+
+    const newHabit = data as Habit;
+    setHabits((prev) => [...prev, newHabit]);
+
+    return newHabit;
   };
 
   // Update habit
@@ -102,6 +106,8 @@ export function useHabits() {
       .eq("user_id", user.id)
       .select()
       .single();
+
+    setHabits((prev) => prev.map((h) => (h.id === id ? (data as Habit) : h)));
 
     if (error) throw error;
     return data;
@@ -117,6 +123,8 @@ export function useHabits() {
       .eq("id", id)
       .eq("user_id", user.id);
 
+    setHabits((prev) => prev.filter((h) => h.id !== id));
+
     if (error) throw error;
   };
 
@@ -129,4 +137,3 @@ export function useHabits() {
     deleteHabit,
   };
 }
-
