@@ -1,20 +1,17 @@
 import {
-  Smile,
+  Check,
+  ChevronDown,
+  ClipboardPaste,
+  Copy,
+  Database,
   Plus,
   X,
-  Copy,
-  ChevronDown,
-  Check,
-  ClipboardPaste,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getSelectedShapeClasses } from "../utils/calendar.ts";
 
-interface Habit {
-  id: string;
-  title: string;
-  selectedDates: string[];
-}
+import { useEffect, useState } from "react";
+import { useHabitDates } from "../hooks/useHabitDates";
+import { useHabits } from "../hooks/useHabits";
+import { getSelectedShapeClasses } from "../utils/calendar.ts";
 
 export function LinearCalendar() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -56,134 +53,114 @@ export function LinearCalendar() {
 
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  // State to manage multiple habits
-  const [habits, setHabits] = useState<Habit[]>(() => {
-    try {
-      const saved = localStorage.getItem("habit-tracker-2026-habits");
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (error) {
-      console.error("Error loading habits from localStorage:", error);
-    }
-    // Default: one empty habit
-    return [{ id: "1", title: "", selectedDates: [] }];
-  });
+  // Use Supabase hooks
+  const {
+    habits,
+    loading: habitsLoading,
+    error: habitsError,
+    createHabit,
+    updateHabit,
+    deleteHabit: deleteHabitFromDB,
+  } = useHabits();
 
-  const [activeHabitId, setActiveHabitId] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem("habit-tracker-2026-active");
-      return saved || "1";
-    } catch (error) {
-      console.error("Error loading active habit:", error);
-      return "1";
-    }
-  });
+  const [activeHabitId, setActiveHabitId] = useState<string | null>(null);
 
-  // Save habits to localStorage
+  // Set active habit when habits are loaded
   useEffect(() => {
-    try {
-      localStorage.setItem("habit-tracker-2026-habits", JSON.stringify(habits));
-    } catch (error) {
-      console.error("Error saving habits to localStorage:", error);
+    if (habits.length > 0 && !activeHabitId) {
+      setActiveHabitId(habits[0].id);
+    } else if (habits.length === 0 && activeHabitId) {
+      setActiveHabitId(null);
     }
-  }, [habits]);
+  }, [habits, activeHabitId]);
 
-  // Save active habit to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem("habit-tracker-2026-active", activeHabitId);
-    } catch (error) {
-      console.error("Error saving active habit to localStorage:", error);
-    }
-  }, [activeHabitId]);
+  // Use habit dates hook
+  const {
+    dates: habitDates,
+    loading: datesLoading,
+    toggleDate: toggleDateInDB,
+    isDateSelected: isDateSelectedInDB,
+    getSelectedDates,
+    initializeMonth: initializeMonthInDB,
+  } = useHabitDates(activeHabitId);
 
   // Get current active habit
-  const activeHabit = habits.find((h) => h.id === activeHabitId) || habits[0];
-  const selectedDates = new Set(activeHabit.selectedDates);
+  const activeHabit = habits.find((h) => h.id === activeHabitId);
 
   // Update habit title
-  const updateHabitTitle = (title: string) => {
-    setHabits(
-      habits.map((h) => (h.id === activeHabitId ? { ...h, title } : h)),
-    );
+  const updateHabitTitle = async (title: string) => {
+    if (!activeHabitId) return;
+    try {
+      await updateHabit(activeHabitId, title);
+    } catch (error) {
+      console.error("Error updating habit title:", error);
+      alert("습관 제목을 업데이트하는 중 오류가 발생했습니다.");
+    }
   };
 
   // Add new habit
-  const addHabit = () => {
+  const addHabit = async () => {
     if (habits.length >= 5) return;
-    const newHabit: Habit = {
-      id: Date.now().toString(),
-      title: "",
-      selectedDates: [],
-    };
-    setHabits([...habits, newHabit]);
-    setActiveHabitId(newHabit.id);
-  };
-
-  // Delete habit
-  const deleteHabit = (id: string) => {
-    if (habits.length <= 1) return; // Keep at least one habit
-    const newHabits = habits.filter((h) => h.id !== id);
-    setHabits(newHabits);
-    if (activeHabitId === id) {
-      setActiveHabitId(newHabits[0].id);
+    try {
+      const newHabit = await createHabit("도서관 가기");
+      setActiveHabitId(newHabit.id);
+    } catch (error) {
+      console.error("Error creating habit:", error);
+      alert("새 습관을 생성하는 중 오류가 발생했습니다.");
     }
   };
 
-  // Toggle date selection
-  const toggleDate = (monthIndex: number, day: number) => {
-    const dateKey = `${year}-${monthIndex}-${day}`;
-    const currentDates = activeHabit.selectedDates;
-    const newDates = currentDates.includes(dateKey)
-      ? currentDates.filter((d) => d !== dateKey)
-      : [...currentDates, dateKey];
+  // Delete habit
+  const deleteHabit = async (id: string) => {
+    if (habits.length <= 1) return; // Keep at least one habit
+    try {
+      await deleteHabitFromDB(id);
+      if (activeHabitId === id) {
+        const remainingHabits = habits.filter((h) => h.id !== id);
+        setActiveHabitId(remainingHabits[0]?.id || null);
+      }
+    } catch (error) {
+      console.error("Error deleting habit:", error);
+      alert("습관을 삭제하는 중 오류가 발생했습니다.");
+    }
+  };
 
-    setHabits(
-      habits.map((h) =>
-        h.id === activeHabitId ? { ...h, selectedDates: newDates } : h,
-      ),
-    );
+  // Helper function to format date as YYYY-MM-DD
+  const formatDate = (year: number, month: number, day: number) => {
+    const monthStr = String(month).padStart(2, "0");
+    const dayStr = String(day).padStart(2, "0");
+    return `${year}-${monthStr}-${dayStr}`;
+  };
+
+  // Toggle date selection
+  const toggleDate = async (monthIndex: number, day: number) => {
+    const dateKey = formatDate(year, monthIndex + 1, day);
+    try {
+      await toggleDateInDB(dateKey);
+    } catch (error) {
+      console.error("Error toggling date:", error);
+      alert("날짜를 업데이트하는 중 오류가 발생했습니다.");
+    }
   };
 
   // Check if a date is selected
   const isDateSelected = (monthIndex: number, day: number) => {
-    return selectedDates.has(`${year}-${monthIndex}-${day}`);
+    const dateKey = formatDate(year, monthIndex + 1, day);
+    return isDateSelectedInDB(dateKey);
   };
 
   // Initialize entire month (fill all dates for a month)
-  const initializeMonth = (monthIndex: number) => {
-    const daysInMonth = getDaysInMonth(monthIndex, year);
-    const currentDates = activeHabit.selectedDates;
-
-    // Check if all days in this month are already selected
-    const monthDates = Array.from(
-      { length: daysInMonth },
-      (_, i) => `${year}-${monthIndex}-${i + 1}`,
-    );
-    const allSelected = monthDates.every((date) => currentDates.includes(date));
-
-    let newDates;
-    if (allSelected) {
-      // If all selected, deselect all days in this month
-      newDates = currentDates.filter((date) => {
-        const [y, m] = date.split("-").map(Number);
-        return !(y === year && m === monthIndex);
-      });
-    } else {
-      // Otherwise, select all days in this month
-      const datesToAdd = monthDates.filter(
-        (date) => !currentDates.includes(date),
-      );
-      newDates = [...currentDates, ...datesToAdd];
+  const initializeMonth = async (monthIndex: number) => {
+    try {
+      await initializeMonthInDB(year, monthIndex);
+    } catch (error) {
+      console.error("Error initializing month:", error);
+      alert("월 데이터를 초기화하는 중 오류가 발생했습니다.");
     }
-
-    setHabits(
-      habits.map((h) =>
-        h.id === activeHabitId ? { ...h, selectedDates: newDates } : h,
-      ),
-    );
   };
+
+  // Get selected dates count
+  const selectedDatesCount = getSelectedDates().length;
 
   // Export to PDF
   const exportToPDF = () => {
@@ -194,10 +171,14 @@ export function LinearCalendar() {
   const copyHabitData = async () => {
     try {
       const exportData = {
-        habits,
+        habits: habits.map((h) => ({
+          id: h.id,
+          title: h.title,
+          selectedDates: getSelectedDates(),
+        })),
         activeHabitId,
         exportDate: new Date().toISOString(),
-        version: "1.0",
+        version: "2.0",
       };
       const dataString = JSON.stringify(exportData, null, 2);
 
@@ -222,15 +203,15 @@ export function LinearCalendar() {
       }
     } catch (error) {
       console.error("Error copying data:", error);
-      alert("Failed to copy data to clipboard");
+      alert("데이터를 복사하는 중 오류가 발생했습니다.");
     }
   };
 
-  // Paste habit data from clipboard
+  // Paste habit data from clipboard (for migration from localStorage)
   const pasteHabitData = async () => {
     try {
       // Use prompt as fallback for better browser compatibility
-      const pastedText = prompt("Paste your habit data here:");
+      const pastedText = prompt("여기에 습관 데이터를 붙여넣으세요:");
 
       if (!pastedText) {
         return; // User cancelled
@@ -243,24 +224,129 @@ export function LinearCalendar() {
         throw new Error("Invalid data format");
       }
 
-      // Confirm before overwriting
+      // Confirm before importing
       const confirm = window.confirm(
-        `This will replace your current ${habits.length} habit${habits.length > 1 ? "s" : ""} with ${importData.habits.length} imported habit${importData.habits.length > 1 ? "s" : ""}. Continue?`,
+        `현재 ${habits.length}개의 습관을 ${importData.habits.length}개의 가져온 습관으로 교체하시겠습니까?`,
       );
 
       if (!confirm) {
         return;
       }
 
-      // Import the data
-      setHabits(importData.habits);
-      setActiveHabitId(importData.activeHabitId || importData.habits[0].id);
+      // Import the data - create habits in database
+      for (const habit of importData.habits) {
+        try {
+          const newHabit = await createHabit(habit.title || "");
+          // Import dates if available - need to use supabase directly for bulk insert
+          if (
+            habit.selectedDates &&
+            Array.isArray(habit.selectedDates) &&
+            habit.selectedDates.length > 0
+          ) {
+            const { supabase } = await import("../lib/supabase");
+            const datesToInsert = habit.selectedDates.map((date: string) => ({
+              habit_id: newHabit.id,
+              date,
+            }));
+            try {
+              await supabase.from("habit_dates").insert(datesToInsert);
+            } catch (err) {
+              console.error("Error importing dates:", err);
+            }
+          }
+        } catch (err) {
+          console.error("Error importing habit:", err);
+        }
+      }
 
-      alert("Habit data imported successfully!");
+      alert("습관 데이터를 성공적으로 가져왔습니다!");
     } catch (error) {
       console.error("Error pasting data:", error);
       alert(
-        "Failed to import data. Please make sure you copied the data correctly.",
+        "데이터를 가져오는 중 오류가 발생했습니다. 데이터 형식이 올바른지 확인해주세요.",
+      );
+    }
+  };
+
+  // Migrate data from localStorage to server
+  const migrateLocalStorageData = async () => {
+    try {
+      // Get data from localStorage
+      const localStorageKey = "habit-tracker-2026-habits";
+      const localDataString = localStorage.getItem(localStorageKey);
+
+      if (!localDataString) {
+        alert("로컬스토리지에 저장된 데이터가 없습니다.");
+        return;
+      }
+
+      const localData = JSON.parse(localDataString);
+
+      // Validate the data structure
+      if (!Array.isArray(localData) || localData.length === 0) {
+        alert("로컬스토리지 데이터 형식이 올바르지 않습니다.");
+        return;
+      }
+
+      // Confirm before migrating
+      const confirm = window.confirm(
+        `로컬스토리지의 ${localData.length}개 습관을 서버에 저장하시겠습니까? 이 작업은 현재 서버의 데이터에 추가됩니다.`,
+      );
+
+      if (!confirm) {
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Import each habit from localStorage
+      for (const habit of localData) {
+        try {
+          // Create habit in database
+          const newHabit = await createHabit(habit.title || "새 습관");
+
+          // Import dates if available
+          if (
+            habit.selectedDates &&
+            Array.isArray(habit.selectedDates) &&
+            habit.selectedDates.length > 0
+          ) {
+            const { supabase } = await import("../lib/supabase");
+            const datesToInsert = habit.selectedDates.map((date: string) => ({
+              habit_id: newHabit.id,
+              date,
+            }));
+
+            try {
+              await supabase.from("habit_dates").insert(datesToInsert);
+              successCount++;
+            } catch (err) {
+              console.error("Error importing dates for habit:", err);
+              errorCount++;
+            }
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error("Error importing habit from localStorage:", err);
+          errorCount++;
+        }
+      }
+
+      if (errorCount === 0) {
+        alert(
+          `로컬스토리지 데이터를 성공적으로 서버에 저장했습니다! (${successCount}개 습관)`,
+        );
+      } else {
+        alert(
+          `일부 데이터를 저장했습니다. 성공: ${successCount}개, 실패: ${errorCount}개`,
+        );
+      }
+    } catch (error) {
+      console.error("Error migrating localStorage data:", error);
+      alert(
+        "로컬스토리지 데이터를 서버로 마이그레이션하는 중 오류가 발생했습니다.",
       );
     }
   };
@@ -297,6 +383,49 @@ export function LinearCalendar() {
 
   // Calculate max cells needed (31 days + max 6 offset days)
   const maxCells = 37;
+
+  // Loading state
+  if (habitsLoading || datesLoading) {
+    return (
+      <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-[#FF6B4A] text-lg">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (habitsError) {
+    return (
+      <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-red-500 text-lg">
+            오류가 발생했습니다: {habitsError.message}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No habits state
+  if (habits.length === 0) {
+    return (
+      <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-[#FF6B4A] text-lg mb-4">
+            아직 습관이 없습니다.
+          </div>
+          <button
+            onClick={addHabit}
+            className="px-6 py-3 bg-gradient-to-r from-[#FF6B4A] to-[#FF8A6E] text-white rounded-lg hover:shadow-lg transition-all"
+          >
+            첫 번째 습관 추가하기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
@@ -341,9 +470,10 @@ export function LinearCalendar() {
       <div className="mb-6">
         <input
           type="text"
-          value={activeHabit.title}
+          value={activeHabit?.title || ""}
           onChange={(e) => updateHabitTitle(e.target.value)}
-          placeholder="Enter your habit goal (e.g., Daily Exercise, Read Every Day, Meditation...)"
+          onBlur={(e) => updateHabitTitle(e.target.value)}
+          placeholder="습관 목표를 입력하세요 (예: 매일 운동하기, 독서하기, 명상하기...)"
           className="w-full text-2xl md:text-4xl text-center text-[#FF6B4A] border-b-2 border-transparent hover:border-gray-200 focus:border-[#FF6B4A] focus:outline-none transition-colors py-2 placeholder-gray-300"
         />
       </div>
@@ -420,6 +550,16 @@ export function LinearCalendar() {
           >
             <ClipboardPaste className="w-5 h-5" />
             <span className="hidden md:inline">Paste Data</span>
+          </button>
+
+          {/* Migrate LocalStorage Data Button */}
+          <button
+            onClick={migrateLocalStorageData}
+            className="flex items-center gap-2 px-4 py-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF8A6E] transition-all duration-300"
+            title="기존 로컬스토리지 데이터를 서버에 저장하기"
+          >
+            <Database className="w-5 h-5" />
+            <span className="hidden md:inline">서버에 저장</span>
           </button>
 
           {/*<Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />*/}
@@ -605,8 +745,8 @@ export function LinearCalendar() {
       <div className="mt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-2">
         <span>Linear Calendar • {year} • 12 months • Habit Tracker</span>
         <span className="text-[#FF6B4A]">
-          {selectedDates.size} {selectedDates.size === 1 ? "day" : "days"}{" "}
-          tracked • Make it a wonderful year
+          {selectedDatesCount} {selectedDatesCount === 1 ? "일" : "일"} 추적됨 •
+          멋진 한 해 되세요
         </span>
       </div>
 
