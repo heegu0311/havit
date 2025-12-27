@@ -1,42 +1,19 @@
-import {
-  Check,
-  ChevronDown,
-  ClipboardPaste,
-  Copy,
-  Database,
-  Plus,
-  X,
-} from "lucide-react";
+import { ChevronDown, Database, Plus, X } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { useHabitDates } from "../hooks/useHabitDates";
 import { useHabits } from "../hooks/useHabits";
 import { getSelectedShapeClasses } from "../utils/calendar.ts";
+import { Spinner } from "@/components/ui/spinner.tsx";
 
 export function LinearCalendar() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showYearDropdown, setShowYearDropdown] = useState(false);
-  const [copiedData, setCopiedData] = useState(false);
 
   const year = selectedYear;
   const availableYears = [2025, 2026];
 
   const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const monthsShort = [
     "Jan",
     "Feb",
     "Mar",
@@ -162,112 +139,6 @@ export function LinearCalendar() {
   // Get selected dates count
   const selectedDatesCount = getSelectedDates().length;
 
-  // Export to PDF
-  const exportToPDF = () => {
-    window.print();
-  };
-
-  // Copy habit data to clipboard
-  const copyHabitData = async () => {
-    try {
-      const exportData = {
-        habits: habits.map((h) => ({
-          id: h.id,
-          title: h.title,
-          selectedDates: getSelectedDates(),
-        })),
-        activeHabitId,
-        exportDate: new Date().toISOString(),
-        version: "2.0",
-      };
-      const dataString = JSON.stringify(exportData, null, 2);
-
-      // Fallback method using textarea for better browser compatibility
-      const textarea = document.createElement("textarea");
-      textarea.value = dataString;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      try {
-        document.execCommand("copy");
-        setCopiedData(true);
-        setTimeout(() => setCopiedData(false), 2000);
-      } catch (err) {
-        console.error("Fallback copy failed:", err);
-        // Show the data in an alert as last resort
-        prompt("Copy this data manually (Ctrl+C/Cmd+C):", dataString);
-      } finally {
-        document.body.removeChild(textarea);
-      }
-    } catch (error) {
-      console.error("Error copying data:", error);
-      alert("데이터를 복사하는 중 오류가 발생했습니다.");
-    }
-  };
-
-  // Paste habit data from clipboard (for migration from localStorage)
-  const pasteHabitData = async () => {
-    try {
-      // Use prompt as fallback for better browser compatibility
-      const pastedText = prompt("여기에 습관 데이터를 붙여넣으세요:");
-
-      if (!pastedText) {
-        return; // User cancelled
-      }
-
-      const importData = JSON.parse(pastedText);
-
-      // Validate the data structure
-      if (!importData.habits || !Array.isArray(importData.habits)) {
-        throw new Error("Invalid data format");
-      }
-
-      // Confirm before importing
-      const confirm = window.confirm(
-        `현재 ${habits.length}개의 습관을 ${importData.habits.length}개의 가져온 습관으로 교체하시겠습니까?`,
-      );
-
-      if (!confirm) {
-        return;
-      }
-
-      // Import the data - create habits in database
-      for (const habit of importData.habits) {
-        try {
-          const newHabit = await createHabit(habit.title || "");
-          // Import dates if available - need to use supabase directly for bulk insert
-          if (
-            habit.selectedDates &&
-            Array.isArray(habit.selectedDates) &&
-            habit.selectedDates.length > 0
-          ) {
-            const { supabase } = await import("../lib/supabase");
-            const datesToInsert = habit.selectedDates.map((date: string) => ({
-              habit_id: newHabit.id,
-              date,
-            }));
-            try {
-              await supabase.from("habit_dates").insert(datesToInsert);
-            } catch (err) {
-              console.error("Error importing dates:", err);
-            }
-          }
-        } catch (err) {
-          console.error("Error importing habit:", err);
-        }
-      }
-
-      alert("습관 데이터를 성공적으로 가져왔습니다!");
-    } catch (error) {
-      console.error("Error pasting data:", error);
-      alert(
-        "데이터를 가져오는 중 오류가 발생했습니다. 데이터 형식이 올바른지 확인해주세요.",
-      );
-    }
-  };
-
   // Migrate data from localStorage to server
   const migrateLocalStorageData = async () => {
     try {
@@ -389,7 +260,7 @@ export function LinearCalendar() {
     return (
       <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="text-[#FF6B4A] text-lg">로딩 중...</div>
+          <Spinner className="w-16 h-16 text-[#FF6B4A]" />
         </div>
       </div>
     );
@@ -523,35 +394,6 @@ export function LinearCalendar() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Copy Data Button */}
-          <button
-            onClick={copyHabitData}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-[#FF6B4A] text-[#FF6B4A] rounded-lg hover:bg-[#FFF5F3] transition-all duration-300"
-            title="Copy habit data to transfer between browsers"
-          >
-            {copiedData ? (
-              <>
-                <Check className="w-5 h-5" />
-                <span className="hidden md:inline">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-5 h-5" />
-                <span className="hidden md:inline">Copy Data</span>
-              </>
-            )}
-          </button>
-
-          {/* Paste Data Button */}
-          <button
-            onClick={pasteHabitData}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-[#FF6B4A] text-[#FF6B4A] rounded-lg hover:bg-[#FFF5F3] transition-all duration-300"
-            title="Paste habit data from clipboard"
-          >
-            <ClipboardPaste className="w-5 h-5" />
-            <span className="hidden md:inline">Paste Data</span>
-          </button>
-
           {/* Migrate LocalStorage Data Button */}
           <button
             onClick={migrateLocalStorageData}
@@ -559,7 +401,9 @@ export function LinearCalendar() {
             title="기존 로컬스토리지 데이터를 서버에 저장하기"
           >
             <Database className="w-5 h-5" />
-            <span className="hidden md:inline">서버에 저장</span>
+            <span className="hidden md:inline">
+              앱 VER.1 데이터 서버에 저장
+            </span>
           </button>
 
           {/*<Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />*/}

@@ -1,6 +1,7 @@
 import { useAuth } from "../contexts/AuthContext";
 import { AuthModal } from "./auth/AuthModal";
 import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner.tsx";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,12 +14,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FFF5F0] flex items-center justify-center">
-        <div className="text-[#FF6B4A] text-lg">로딩 중...</div>
+        <Spinner className="w-16 h-16 text-[#FF6B4A]" />
       </div>
     );
   }
 
-  if (!user) {
+  if (!loading && !user) {
     return (
       <>
         <div className="min-h-screen bg-[#FFF5F0] flex items-center justify-center p-4">
@@ -44,4 +45,3 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   return <>{children}</>;
 }
-
