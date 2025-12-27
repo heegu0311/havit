@@ -1,4 +1,4 @@
-import { ChevronDown, Database, Plus, X } from "lucide-react";
+import { Check, ChevronDown, Copy, Database, Plus, X } from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
 import { useHabitDates } from "../hooks/useHabitDates";
@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 export function LinearCalendar() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [copiedData, setCopiedData] = useState(false);
 
   // Get data from localStorage
   const localStorageKey = "habit-tracker-2026-habits";
@@ -143,6 +144,45 @@ export function LinearCalendar() {
     } catch (error) {
       console.error("Error initializing month:", error);
       alert("월 데이터를 초기화하는 중 오류가 발생했습니다.");
+    }
+  };
+
+  // Copy habit data to clipboard
+  const copyHabitData = async () => {
+    try {
+      const exportData = {
+        habits,
+        activeHabitId,
+        exportDate: new Date().toISOString(),
+        version: "1.0",
+      };
+      const dataString = JSON.stringify(exportData, null, 2);
+
+      // Fallback method using textarea for better browser compatibility
+      const textarea = document.createElement("textarea");
+      textarea.value = dataString;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand("copy");
+        setCopiedData(true);
+        setTimeout(() => setCopiedData(false), 2000);
+      } catch (err) {
+        console.error("Fallback copy failed:", err);
+        // Show the data in an alert as last resort
+        prompt("Copy this data manually (Ctrl+C/Cmd+C):", dataString);
+      } finally {
+        document.body.removeChild(textarea);
+        alert(
+          "데이터가 복사되었습니다!\nheegu0311@gmail.com 으로\n가입하신 이메일 주소도 함께 보내주세요!",
+        );
+      }
+    } catch (error) {
+      console.error("Error copying data:", error);
+      alert("Failed to copy data to clipboard");
     }
   };
 
@@ -410,16 +450,33 @@ export function LinearCalendar() {
 
         {localDataString && (
           <div className="flex items-center gap-3">
+            {/* Copy Data Button */}
+            <button
+              onClick={copyHabitData}
+              className="flex items-center gap-2 px-4 py-2 border-2 border-[#FF6B4A] text-[#FF6B4A] rounded-lg hover:bg-[#FFF5F3] transition-all duration-300"
+              title="Copy habit data to transfer between browsers"
+            >
+              {copiedData ? (
+                <>
+                  <Check className="w-5 h-5" />
+                  <span className="hidden md:inline">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5" />
+                  <span className="hidden md:inline">기존 데이터 복사</span>
+                </>
+              )}
+            </button>
+
             {/* Migrate LocalStorage Data Button */}
             <button
               onClick={migrateLocalStorageData}
-              className="flex items-center gap-2 px-4 py-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF8A6E] transition-all duration-300"
+              className="flex items-center gap-2 px-4 py-2 border-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF8A6E] transition-all duration-300"
               title="기존 로컬스토리지 데이터를 서버에 저장하기"
             >
               <Database className="w-5 h-5" />
-              <span className="hidden md:inline">
-                로그인 시스템 이전 데이터 동기화
-              </span>
+              <span className="hidden md:inline">기존 데이터 동기화</span>
             </button>
 
             {/*<Smile className="w-8 h-8 md:w-12 md:h-12 text-[#FF6B4A]" />*/}

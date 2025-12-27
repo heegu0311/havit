@@ -4,7 +4,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#FF6B4A",
+  "background_color": "#FFF5F0",
   "theme_color": "#000000",
   "description": "A simple habit tracker",
   "icons": [
