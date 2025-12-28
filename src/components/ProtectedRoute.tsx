@@ -11,14 +11,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FFF5F0] flex items-center justify-center">
-        <Spinner className="w-16 h-16 text-[#FF6B4A]" />
-      </div>
-    );
-  }
-
   if (!loading && !user) {
     return (
       <>
@@ -55,4 +47,3 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   return <>{children}</>;
 }
-

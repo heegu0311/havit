@@ -61,15 +61,6 @@ function LinearCalendar() {
 
   const [activeHabitId, setActiveHabitId] = useState<string | null>(null);
 
-  // Set active habit when habits are loaded
-  useEffect(() => {
-    if (habits.length > 0 && !activeHabitId) {
-      setActiveHabitId(habits[0].id);
-    } else if (habits.length === 0 && activeHabitId) {
-      setActiveHabitId(null);
-    }
-  }, [habits, activeHabitId]);
-
   // Use habit dates hook
   const {
     dates: habitDates,
@@ -107,6 +98,15 @@ function LinearCalendar() {
     const timeoutId = setTimeout(checkRefsReady, 100);
     return () => clearTimeout(timeoutId);
   }, [selectedYear]);
+
+  // Set active habit when habits are loaded
+  useEffect(() => {
+    if (habits.length > 0 && !activeHabitId) {
+      setActiveHabitId(habits[0].id);
+    } else if (habits.length === 0 && activeHabitId) {
+      setActiveHabitId(null);
+    }
+  }, [habits, activeHabitId]);
 
   // Create a Set of selected dates for fast lookup
   const selectedDatesSet = useMemo(() => {
@@ -369,9 +369,10 @@ function LinearCalendar() {
   const maxCells = 37;
 
   // Loading state
-  if (habitsLoading || datesLoading) {
+  if (localTitle === "" || habitsLoading || datesLoading) {
+    console.log(1);
     return (
-      <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="flex justify-center items-center max-w-[1600px] min-h-[875px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-center py-12">
           <Spinner className="w-16 h-16 text-[#FF6B4A]" />
         </div>
@@ -381,6 +382,7 @@ function LinearCalendar() {
 
   // Error state
   if (habitsError) {
+    console.log(2);
     return (
       <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-center py-12">
