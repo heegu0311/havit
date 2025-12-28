@@ -22,6 +22,7 @@ function LinearCalendar() {
   const [localTitle, setLocalTitle] = useState<string>("");
   // @ts-ignore
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileMonthRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { signOut } = useAuth();
 
   // Get data from localStorage
@@ -84,6 +85,28 @@ function LinearCalendar() {
   useEffect(() => {
     setLocalTitle(activeHabit?.title || "");
   }, [activeHabit?.id]);
+
+  useEffect(() => {
+    if (window.innerWidth >= 768) return;
+
+    const now = new Date();
+    const currentMonthIndex = now.getMonth();
+
+    // 모든 월이 렌더링될 때까지 대기
+    const checkRefsReady = () => {
+      if (mobileMonthRefs.current[currentMonthIndex]) {
+        mobileMonthRefs.current[currentMonthIndex]!.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } else {
+        setTimeout(checkRefsReady, 50); // 50ms마다 체크
+      }
+    };
+
+    const timeoutId = setTimeout(checkRefsReady, 100);
+    return () => clearTimeout(timeoutId);
+  }, [selectedYear]);
 
   // Create a Set of selected dates for fast lookup
   const selectedDatesSet = useMemo(() => {
@@ -439,7 +462,7 @@ function LinearCalendar() {
       </div>
 
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="relative w-full flex items-center gap-4">
           {/* Year Selector */}
           <div className="relative">
@@ -643,6 +666,9 @@ function LinearCalendar() {
           return (
             <div
               key={monthIndex}
+              ref={(el) => {
+                mobileMonthRefs.current[monthIndex] = el;
+              }}
               className="border border-gray-200 rounded-lg p-4"
             >
               {/* Month name and number */}
