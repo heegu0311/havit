@@ -438,27 +438,9 @@ function LinearCalendar() {
         </button>
       </div>
 
-      {/* Habit Title Input */}
-      <div className="mb-6">
-        <input
-          type="text"
-          value={localTitle}
-          onChange={handleTitleChange}
-          onBlur={() => {
-            // Ensure any pending debounced update is executed
-            if (debounceTimeoutRef.current) {
-              clearTimeout(debounceTimeoutRef.current);
-              updateHabitTitle(localTitle);
-            }
-          }}
-          placeholder="습관 목표를 입력하세요 (예: 매일 운동하기, 독서하기, 명상하기...)"
-          className="w-full text-2xl md:text-4xl text-center text-[#FF6B4A] border-b-2 border-transparent hover:border-gray-200 focus:border-[#FF6B4A] focus:outline-none transition-colors py-2 placeholder-gray-300"
-        />
-      </div>
-
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center gap-4">
+        <div className="relative w-full flex items-center gap-4">
           {/* Year Selector */}
           <div className="relative">
             <button
@@ -495,9 +477,27 @@ function LinearCalendar() {
             )}
           </div>
 
-          <p className="text-[#FF6B4A] text-xs md:text-sm hidden lg:block">
-            {months.join(" • ")}
-          </p>
+          {/* Habit Title Input */}
+          <div className="absolute top-0 left-0 left-1/2 transform -translate-x-1/2">
+            <input
+              type="text"
+              value={localTitle}
+              onChange={handleTitleChange}
+              onBlur={() => {
+                // Ensure any pending debounced update is executed
+                if (debounceTimeoutRef.current) {
+                  clearTimeout(debounceTimeoutRef.current);
+                  updateHabitTitle(localTitle);
+                }
+              }}
+              placeholder="습관 목표를 입력하세요 (예: 매일 운동하기, 독서하기, 명상하기...)"
+              className="w-full text-2xl md:text-4xl text-center text-[#FF6B4A] border-b-2 border-transparent hover:border-gray-200 focus:border-[#FF6B4A] focus:outline-none transition-colors py-2 placeholder-gray-300"
+            />
+          </div>
+
+          {/*<p className="text-[#FF6B4A] text-xs md:text-sm hidden lg:block">*/}
+          {/*  {months.join(" • ")}*/}
+          {/*</p>*/}
         </div>
 
         {localDataString && (
@@ -544,9 +544,20 @@ function LinearCalendar() {
           <div className="flex-1 grid grid-cols-37 gap-px">
             {Array.from({ length: maxCells }, (_, i) => {
               const dayIndex = i % 7;
+              const isWeekend = dayIndex === 5 || dayIndex === 6; // Sat(5), Sun(6)
+              const textColor = isWeekend
+                ? "text-orange-500 md:text-orange-600"
+                : "text-gray-500 md:text-gray-900";
+
               return (
-                <div key={i} className="text-center text-xs text-gray-500 py-1">
-                  {dayNames[dayIndex]}
+                <div
+                  key={i}
+                  className={`text-center text-xs py-1 ${textColor}`}
+                >
+                  <span className="lg:hidden">
+                    {dayNames[dayIndex].slice(0, 1)}
+                  </span>
+                  <span className="hidden lg:inline">{dayNames[dayIndex]}</span>
                 </div>
               );
             })}
@@ -560,7 +571,7 @@ function LinearCalendar() {
           return (
             <div
               key={monthIndex}
-              className="flex border-t border-gray-200 py-1"
+              className="flex items-center border-t border-gray-200 py-1"
             >
               {/* Month number */}
               <div
@@ -605,7 +616,7 @@ function LinearCalendar() {
                       key={i}
                       onClick={() => day && toggleDate(monthIndex, day)}
                       className={[
-                        "text-center py-2 text-sm",
+                        "flex justify-center items-center text-center min-w-2 min-h-7 w-full h-full text-sm",
                         baseClickable,
                         textColor,
                         isSelected ? "bg-[#FF6B4A]" : "rounded-full",
