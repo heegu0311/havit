@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useHabitDates } from "../hooks/useHabitDates";
 import { useHabits } from "../hooks/useHabits";
 import { useAuth } from "../contexts/AuthContext";
@@ -23,7 +23,7 @@ function LinearCalendar() {
   // @ts-ignore
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mobileMonthRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const { signOut } = useAuth();
+  const { signOut, loading } = useAuth();
 
   // Get data from localStorage
   const localStorageKey = "habit-tracker-2026-habits";
@@ -368,9 +368,9 @@ function LinearCalendar() {
   // Calculate max cells needed (31 days + max 6 offset days)
   const maxCells = 37;
 
+  console.log(loading, habitsLoading, datesLoading);
   // Loading state
-  if (localTitle === "" || habitsLoading || datesLoading) {
-    console.log(1);
+  if (loading || habitsLoading || datesLoading) {
     return (
       <div className="flex justify-center items-center max-w-[1600px] min-h-[875px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-center py-12">
@@ -382,7 +382,6 @@ function LinearCalendar() {
 
   // Error state
   if (habitsError) {
-    console.log(2);
     return (
       <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-center py-12">
@@ -395,7 +394,7 @@ function LinearCalendar() {
   }
 
   // No habits state
-  if (habits.length === 0) {
+  if (habits.length === 0 && habitDates.length === 0) {
     return (
       <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col items-center justify-center py-12">
@@ -467,7 +466,7 @@ function LinearCalendar() {
       <div className="flex justify-between items-center mb-6">
         <div className="relative w-full flex items-center gap-4">
           {/* Year Selector */}
-          <div className="relative">
+          <div>
             <button
               onClick={() => setShowYearDropdown(!showYearDropdown)}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF6B4A] to-[#FF8A6E] text-white rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
@@ -503,7 +502,7 @@ function LinearCalendar() {
           </div>
 
           {/* Habit Title Input */}
-          <div className="absolute top-0 left-0 left-1/2 transform -translate-x-1/2">
+          <div className="md:flex static md:absolute top-0 right-0 md:left-1/2 md:transform md:-translate-x-1/2 ">
             <input
               type="text"
               value={localTitle}
@@ -515,7 +514,7 @@ function LinearCalendar() {
                   updateHabitTitle(localTitle);
                 }
               }}
-              placeholder="습관 목표를 입력하세요 (예: 매일 운동하기, 독서하기, 명상하기...)"
+              placeholder="Enter habit here :)"
               className="w-full text-2xl md:text-4xl text-center text-[#FF6B4A] border-b-2 border-transparent hover:border-gray-200 focus:border-[#FF6B4A] focus:outline-none transition-colors py-2 placeholder-gray-300"
             />
           </div>
@@ -734,7 +733,7 @@ function LinearCalendar() {
                         "text-center py-3 text-sm",
                         baseClickable,
                         textColor,
-                        isSelected ? "bg-[#FF6B4A]" : "hover:rounded-full",
+                        isSelected ? "bg-[#FF6B4A]" : "rounded-full",
                         selectedShapeClasses,
                       ]
                         .filter(Boolean)
