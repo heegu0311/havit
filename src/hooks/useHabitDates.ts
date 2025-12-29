@@ -18,9 +18,9 @@ export function useHabitDates(habitId: string | null) {
   // Fetch habit dates
   useEffect(() => {
     if (!user || !habitId) {
+      setLoading(false);
       return;
     }
-
     const fetchDates = async () => {
       try {
         setLoading(true);

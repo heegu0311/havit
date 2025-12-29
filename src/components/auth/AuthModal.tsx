@@ -48,6 +48,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
               },
             }}
             providers={["google"]}
+            queryParams={{ prompt: "consent" }}
             localization={{
               variables: {
                 sign_in: {

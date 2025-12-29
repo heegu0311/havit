@@ -383,7 +383,7 @@ function LinearCalendar() {
   // Error state
   if (habitsError) {
     return (
-      <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="max-w-[1600px] min-h-[875px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-center py-12">
           <div className="text-red-500 text-lg">
             오류가 발생했습니다: {habitsError.message}
@@ -396,7 +396,7 @@ function LinearCalendar() {
   // No habits state
   if (habits.length === 0 && habitDates.length === 0) {
     return (
-      <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="flex justify-center items-center max-w-[1600px] min-h-[875px] mx-auto bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-[#FF6B4A] text-lg mb-4">
             아직 습관이 없습니다.
