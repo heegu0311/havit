@@ -15,12 +15,14 @@ export function useHabits() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
   // Fetch habits
   useEffect(() => {
     if (!user) {
       setHabits([]);
       setLoading(false);
+      setIsInitialLoadComplete(true);
       return;
     }
 
@@ -40,6 +42,7 @@ export function useHabits() {
         console.error("Error fetching habits:", err);
       } finally {
         setLoading(false);
+        setIsInitialLoadComplete(true);
       }
     };
 
@@ -132,6 +135,7 @@ export function useHabits() {
     habits,
     loading,
     error,
+    isInitialLoadComplete,
     createHabit,
     updateHabit,
     deleteHabit,

@@ -1,0 +1,248 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useHabits } from "./useHabits";
+import { useHabitDates } from "./useHabitDates";
+import { formatDate } from "@/utils/calendar";
+import {
+  copyHabitData as copyData,
+  migrateLocalStorageData as migrateData,
+} from "@/utils/dataMigration";
+
+/**
+ * Centralized hook for all LinearCalendar business logic and state management
+ */
+export function useCalendarLogic() {
+  // UI State
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [copiedData, setCopiedData] = useState(false);
+  const [localTitle, setLocalTitle] = useState<string>("");
+  const [activeHabitId, setActiveHabitId] = useState<string | null>(null);
+
+  // Refs for DOM and debouncing
+  // @ts-ignore
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileMonthRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Auth & Data hooks
+  const { signOut, loading } = useAuth();
+  const {
+    habits,
+    loading: habitsLoading,
+    error: habitsError,
+    isInitialLoadComplete: habitsInitialLoadComplete,
+    createHabit,
+    updateHabit,
+    deleteHabit: deleteHabitFromDB,
+  } = useHabits();
+
+  const {
+    dates: habitDates,
+    loading: datesLoading,
+    toggleDate: toggleDateInDB,
+    initializeMonth: initializeMonthInDB,
+  } = useHabitDates(activeHabitId);
+
+  // Get current active habit
+  const activeHabit = habits.find((h) => h.id === activeHabitId);
+
+  // Create a Set of selected dates for fast lookup
+  const selectedDatesSet = useMemo(() => {
+    return new Set(habitDates.map((d) => d.date));
+  }, [habitDates]);
+
+  const selectedDatesCount = habitDates.length;
+
+  // Get localStorage data for migration
+  const localStorageKey = "habit-tracker-2026-habits";
+  const localDataString = localStorage.getItem(localStorageKey);
+
+  // Initialize local title when active habit changes
+  useEffect(() => {
+    setLocalTitle(activeHabit?.title || "");
+  }, [activeHabit?.id]);
+
+  // Mobile: scroll to current month on year change
+  useEffect(() => {
+    if (window.innerWidth >= 768) return;
+
+    const now = new Date();
+    const currentMonthIndex = now.getMonth();
+
+    const checkRefsReady = () => {
+      if (mobileMonthRefs.current[currentMonthIndex]) {
+        mobileMonthRefs.current[currentMonthIndex]!.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } else {
+        setTimeout(checkRefsReady, 50);
+      }
+    };
+
+    const timeoutId = setTimeout(checkRefsReady, 100);
+    return () => clearTimeout(timeoutId);
+  }, [selectedYear]);
+
+  // Set active habit when habits are loaded
+  useEffect(() => {
+    if (habits.length > 0 && !activeHabitId) {
+      setActiveHabitId(habits[0].id);
+    } else if (habits.length === 0 && activeHabitId) {
+      setActiveHabitId(null);
+    }
+  }, [habits, activeHabitId]);
+
+  // Update habit title with debounce
+  const updateHabitTitle = useCallback(
+    async (title: string) => {
+      if (!activeHabitId) return;
+      try {
+        await updateHabit(activeHabitId, title);
+      } catch (error) {
+        console.error("Error updating habit title:", error);
+        alert("습관 제목을 업데이트하는 중 오류가 발생했습니다.");
+      }
+    },
+    [activeHabitId, updateHabit],
+  );
+
+  // Handle title input change with debounce
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newTitle = e.target.value;
+      setLocalTitle(newTitle);
+
+      // Clear previous timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Set new timeout for debounced update
+      debounceTimeoutRef.current = setTimeout(() => {
+        updateHabitTitle(newTitle);
+      }, 500);
+    },
+    [updateHabitTitle],
+  );
+
+  // Add new habit
+  const addHabit = useCallback(async () => {
+    if (habits.length >= 5) return;
+    try {
+      const newHabit = await createHabit(`Habit ${habits.length + 1}`);
+      setActiveHabitId(newHabit.id);
+    } catch (error) {
+      console.error("Error creating habit:", error);
+      alert("새 습관을 생성하는 중 오류가 발생했습니다.");
+    }
+  }, [habits.length, createHabit]);
+
+  // Delete habit
+  const deleteHabit = useCallback(
+    async (id: string) => {
+      if (habits.length <= 1) return;
+      try {
+        await deleteHabitFromDB(id);
+        if (activeHabitId === id) {
+          const remainingHabits = habits.filter((h) => h.id !== id);
+          setActiveHabitId(remainingHabits[0]?.id || null);
+        }
+      } catch (error) {
+        console.error("Error deleting habit:", error);
+        alert("습관을 삭제하는 중 오류가 발생했습니다.");
+      }
+    },
+    [habits, activeHabitId, deleteHabitFromDB],
+  );
+
+  // Toggle date selection
+  const toggleDate = useCallback(
+    async (monthIndex: number, day: number) => {
+      const dateKey = formatDate(selectedYear, monthIndex + 1, day);
+      try {
+        await toggleDateInDB(dateKey);
+      } catch (error) {
+        console.error("Error toggling date:", error);
+        alert("날짜를 업데이트하는 중 오류가 발생했습니다.");
+      }
+    },
+    [selectedYear, toggleDateInDB],
+  );
+
+  // Check if a date is selected
+  const isDateSelected = useCallback(
+    (monthIndex: number, day: number) => {
+      const dateKey = formatDate(selectedYear, monthIndex + 1, day);
+      return selectedDatesSet.has(dateKey);
+    },
+    [selectedYear, selectedDatesSet],
+  );
+
+  // Initialize entire month (fill/clear all dates)
+  const initializeMonth = useCallback(
+    async (monthIndex: number) => {
+      try {
+        await initializeMonthInDB(selectedYear, monthIndex);
+      } catch (error) {
+        console.error("Error initializing month:", error);
+        alert("월 데이터를 초기화하는 중 오류가 발생했습니다.");
+      }
+    },
+    [selectedYear, initializeMonthInDB],
+  );
+
+  // Wrapper for copy habit data
+  const copyHabitData = useCallback(async () => {
+    await copyData(habits, activeHabitId, setCopiedData);
+  }, [habits, activeHabitId]);
+
+  // Wrapper for migrate localStorage data
+  const migrateLocalStorageData = useCallback(async () => {
+    await migrateData(localStorageKey, createHabit);
+  }, [localStorageKey, createHabit]);
+
+  return {
+    // Data
+    habits,
+    activeHabitId,
+    activeHabit,
+    habitDates,
+    selectedDatesSet,
+    selectedDatesCount,
+
+    // Loading & Errors
+    loading,
+    habitsLoading,
+    datesLoading,
+    habitsError,
+    habitsInitialLoadComplete,
+
+    // UI State
+    selectedYear,
+    setSelectedYear,
+    showYearDropdown,
+    setShowYearDropdown,
+    localTitle,
+    setLocalTitle,
+    copiedData,
+
+    // Handlers
+    setActiveHabitId,
+    handleTitleChange,
+    addHabit,
+    deleteHabit,
+    toggleDate,
+    isDateSelected,
+    initializeMonth,
+    copyHabitData,
+    migrateLocalStorageData,
+    signOut,
+
+    // Refs
+    mobileMonthRefs,
+
+    // Utilities
+    localDataString,
+  };
+}

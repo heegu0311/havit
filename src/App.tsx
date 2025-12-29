@@ -1,4 +1,4 @@
-import LinearCalendar from "./components/LinearCalendar.tsx";
+import LinearCalendar from "./components/LinearCalendar";
 import { useAnalytics } from "./hooks/useAnalytics.js";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import ClarityInitializer from "./components/Clarity.js";

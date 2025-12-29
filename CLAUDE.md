@@ -1,1 +1,1 @@
-Use Haiku for routine tasks
+Use default CLAUDE CODE model
