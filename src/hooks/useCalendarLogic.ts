@@ -98,10 +98,24 @@ export function useCalendarLogic() {
     async (title: string) => {
       if (!activeHabitId) return;
       try {
-        await updateHabit(activeHabitId, title);
+        await updateHabit(activeHabitId, { title });
       } catch (error) {
         console.error("Error updating habit title:", error);
         alert("습관 제목을 업데이트하는 중 오류가 발생했습니다.");
+      }
+    },
+    [activeHabitId, updateHabit],
+  );
+
+  // Update habit color
+  const updateHabitColor = useCallback(
+    async (color: string) => {
+      if (!activeHabitId) return;
+      try {
+        await updateHabit(activeHabitId, { color });
+      } catch (error) {
+        console.error("Error updating habit color:", error);
+        alert("습관 색상을 업데이트하는 중 오류가 발생했습니다.");
       }
     },
     [activeHabitId, updateHabit],
@@ -230,6 +244,7 @@ export function useCalendarLogic() {
     // Handlers
     setActiveHabitId,
     handleTitleChange,
+    updateHabitColor,
     addHabit,
     deleteHabit,
     toggleDate,

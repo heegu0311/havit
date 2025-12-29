@@ -37,7 +37,7 @@ function CalendarHeaderComponent({
         <div>
           <button
             onClick={() => onToggleYearDropdown(!showYearDropdown)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF6B4A] to-[#FF8A6E] text-white rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--habit-color)] text-white rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
           >
             <span className="text-2xl md:text-4xl font-bold">
               {selectedYear}
@@ -58,11 +58,16 @@ function CalendarHeaderComponent({
                     onYearChange(yr);
                     onToggleYearDropdown(false);
                   }}
-                  className={`w-full px-6 py-2 text-left hover:bg-[#FFF5F3] transition-colors ${
+                  className={`w-full px-6 py-2 text-left transition-colors ${
                     yr === selectedYear
-                      ? "bg-[#FFF5F3] text-[#FF6B4A]"
-                      : "text-gray-700"
+                      ? "text-[var(--habit-color)]"
+                      : "text-gray-700 hover:bg-gray-50"
                   }`}
+                  style={
+                    yr === selectedYear
+                      ? { backgroundColor: "color-mix(in srgb, var(--habit-color) 10%, white)" }
+                      : {}
+                  }
                 >
                   {yr}
                 </button>
@@ -79,7 +84,7 @@ function CalendarHeaderComponent({
             onChange={onTitleChange}
             onBlur={onTitleBlur}
             placeholder="Enter habit here :)"
-            className="w-full text-2xl md:text-4xl text-center text-[#FF6B4A] border-b-2 border-transparent hover:border-gray-200 focus:border-[#FF6B4A] focus:outline-none transition-colors py-2 placeholder-gray-300"
+            className="w-full text-2xl md:text-4xl text-center text-[var(--habit-color)] border-b-2 border-transparent hover:border-gray-200 focus:border-[var(--habit-color)] focus:outline-none transition-colors py-2 placeholder-gray-300"
           />
         </div>
       </div>
@@ -89,7 +94,10 @@ function CalendarHeaderComponent({
           {/* Copy Data Button */}
           <button
             onClick={onCopyData}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-[#FF6B4A] text-[#FF6B4A] rounded-lg hover:bg-[#FFF5F3] transition-all duration-300"
+            className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--habit-color)] text-[var(--habit-color)] rounded-lg transition-all duration-300"
+            style={{
+              backgroundColor: copiedData ? "color-mix(in srgb, var(--habit-color) 10%, white)" : "transparent"
+            }}
             title="Copy habit data to transfer between browsers"
           >
             {copiedData ? (
@@ -108,7 +116,7 @@ function CalendarHeaderComponent({
           {/* Migrate LocalStorage Data Button */}
           <button
             onClick={onMigrateData}
-            className="flex items-center gap-2 px-4 py-2 border-2 bg-[#FF6B4A] text-white rounded-lg hover:bg-[#FF8A6E] transition-all duration-300"
+            className="flex items-center gap-2 px-4 py-2 border-2 bg-[var(--habit-color)] text-white rounded-lg hover:opacity-90 transition-all duration-300"
             title="기존 로컬스토리지 데이터를 서버에 저장하기"
           >
             <Database className="w-5 h-5" />

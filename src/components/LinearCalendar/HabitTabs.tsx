@@ -1,6 +1,7 @@
-import { memo } from "react";
-import { Plus, X, LogOut } from "lucide-react";
+import { memo, useState, useRef, useEffect } from "react";
+import { Plus, X, LogOut, Palette } from "lucide-react";
 import { Habit } from "@/hooks/useHabits";
+import { ColorPicker } from "./ColorPicker";
 
 interface HabitTabsProps {
   habits: Habit[];
@@ -9,6 +10,7 @@ interface HabitTabsProps {
   onAddHabit: () => void;
   onDeleteHabit: (id: string) => void;
   onSignOut: () => void;
+  onColorChange: (habitId: string, color: string) => void;
   maxHabits: number;
 }
 
@@ -19,40 +21,94 @@ function HabitTabsComponent({
   onAddHabit,
   onDeleteHabit,
   onSignOut,
+  onColorChange,
   maxHabits,
 }: HabitTabsProps) {
+  const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
+  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+  const paletteRefs = useRef<{ [key: string]: SVGSVGElement | null }>({});
+
+  // Debug: Log habits to check if color is present
+  useEffect(() => {
+    console.log("HabitTabs - habits:", habits);
+    habits.forEach((h) => {
+      console.log(`Habit ${h.title}: color = ${h.color}`);
+    });
+  }, [habits]);
+
   return (
-    <div className="flex justify-between gap-4 items-center mb-6 md:mb-10 print-hide">
+    <div className="flex justify-between gap-4 items-center mb-6 md:mb-10 print-hide overflow-x-auto scrollbar-hide">
       {/* Habit Tabs */}
-      <div className="flex-1 flex items-center gap-2 border-b-1 border-gray-200 overflow-x-auto overflow-y-hidden">
+      <div className="flex-1 flex items-center gap-2 border-b-1 border-gray-200">
         {habits.map((habit, index) => (
-          <button
+          <div
             key={habit.id}
             onClick={() => onSelectHabit(habit.id)}
-            className={`relative px-6 py-3 transition-all ${
+            className={`relative px-6 py-3 transition-all cursor-pointer ${
               activeHabitId === habit.id
-                ? "text-[#FF6B4A] border-b-2 border-[#FF6B4A] -mb-[2px]"
+                ? "border-b-2 -mb-[2px]"
                 : "text-gray-500 hover:text-gray-700"
             }`}
+            style={
+              activeHabitId === habit.id
+                ? { color: habit.color, borderColor: habit.color }
+                : { color: habit.color }
+            }
           >
             <span className="flex items-center gap-2 whitespace-nowrap">
               {habit.title || `Habit ${index + 1}`}
-              {habits.length > 1 && activeHabitId === habit.id && (
-                <X
-                  className="w-4 h-4 hover:text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteHabit(habit.id);
-                  }}
-                />
+              {activeHabitId === habit.id && (
+                <>
+                  <Palette
+                    ref={(el) => {
+                      paletteRefs.current[habit.id] = el;
+                    }}
+                    className="w-4 h-4 hover:opacity-70 cursor-pointer transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+
+                      if (showColorPicker === habit.id) {
+                        setShowColorPicker(null);
+                      } else {
+                        // Calculate position
+                        const rect =
+                          paletteRefs.current[
+                            habit.id
+                          ]?.getBoundingClientRect();
+                        if (rect) {
+                          setPickerPosition({
+                            top: rect.bottom + 8,
+                            left: rect.left,
+                          });
+                        }
+                        setShowColorPicker(habit.id);
+                      }
+                    }}
+                  />
+                  {habits.length > 1 && (
+                    <X
+                      className="w-4 h-4 hover:text-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteHabit(habit.id);
+                      }}
+                    />
+                  )}
+                </>
               )}
             </span>
-          </button>
+          </div>
         ))}
         {habits.length < maxHabits && (
           <button
             onClick={onAddHabit}
-            className="px-4 py-3 text-gray-400 hover:text-[#FF6B4A] transition-colors"
+            className="px-4 py-3 text-gray-400 transition-colors"
+            style={{
+              color:
+                habits.length > 0 && activeHabitId
+                  ? habits.find((h) => h.id === activeHabitId)?.color
+                  : "#FF6B4A",
+            }}
             title="Add new habit"
           >
             <Plus className="w-5 h-5" />
@@ -69,6 +125,40 @@ function HabitTabsComponent({
         <LogOut className="w-3.5 h-3.5" />
         <span className="text-sm hidden md:inline">Logout</span>
       </button>
+
+      {/* Color Picker - Fixed Position */}
+      {showColorPicker && (
+        <>
+          {/* Backdrop to close picker */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowColorPicker(null)}
+          />
+
+          {/* Color Picker Dropdown */}
+          <div
+            className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50"
+            style={{
+              top: `${pickerPosition.top}px`,
+              left: `${pickerPosition.left}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm text-gray-600 mb-3 font-medium">색상 선택:</p>
+            <ColorPicker
+              selectedColor={
+                habits.find((h) => h.id === showColorPicker)?.color || "#FF6B4A"
+              }
+              onColorChange={(color) => {
+                if (showColorPicker) {
+                  onColorChange(showColorPicker, color);
+                }
+                setShowColorPicker(null);
+              }}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { memo } from "react";
 import {
-  getSelectedShapeClasses,
-  generateMonthData,
-  MONTH_NAMES_SHORT,
   DAY_NAMES_MONDAY,
+  generateMonthData,
+  getSelectedShapeClasses,
+  MONTH_NAMES_SHORT,
 } from "@/utils/calendar";
 import { CalendarViewProps } from "./types";
 
@@ -26,14 +26,11 @@ function DesktopCalendarViewComponent({
             const dayIndex = i % 7;
             const isWeekend = dayIndex === 5 || dayIndex === 6;
             const textColor = isWeekend
-              ? "text-orange-500 md:text-orange-600"
+              ? "text-[var(--habit-color)]"
               : "text-gray-500 md:text-gray-900";
 
             return (
-              <div
-                key={i}
-                className={`text-center text-xs py-1 ${textColor}`}
-              >
+              <div key={i} className={`text-center text-xs py-1 ${textColor}`}>
                 <span className="lg:hidden">
                   {DAY_NAMES_MONDAY[dayIndex].slice(0, 1)}
                 </span>
@@ -57,7 +54,7 @@ function DesktopCalendarViewComponent({
           >
             {/* Month number */}
             <div
-              className="w-12 flex-shrink-0 text-[#FF6B4A] text-3xl pr-4 cursor-pointer hover:opacity-70 transition-opacity no-print-click"
+              className="w-12 flex-shrink-0 text-[var(--habit-color)] text-3xl pr-4 cursor-pointer hover:opacity-70 transition-opacity no-print-click"
               onClick={() => onInitializeMonth(monthIndex)}
               title={`Click to fill/clear all days in ${MONTH_NAMES_SHORT[monthIndex]}`}
             >
@@ -78,7 +75,7 @@ function DesktopCalendarViewComponent({
                   monthIndex,
                   i,
                   maxCells,
-                  isDateSelected
+                  isDateSelected,
                 );
 
                 const baseClickable = day
@@ -89,7 +86,7 @@ function DesktopCalendarViewComponent({
                   ? "text-white"
                   : day
                     ? isWeekend
-                      ? "text-[#FF6B4A]"
+                      ? "text-[var(--habit-color)]"
                       : "text-gray-700"
                     : "";
 
@@ -101,7 +98,7 @@ function DesktopCalendarViewComponent({
                       "flex justify-center items-center text-center min-w-2 min-h-7 w-full h-full text-sm",
                       baseClickable,
                       textColor,
-                      isSelected ? "bg-[#FF6B4A]" : "rounded-full",
+                      isSelected ? "bg-[var(--habit-color)]" : "rounded-full",
                       selectedShapeClasses,
                     ]
                       .filter(Boolean)

@@ -108,7 +108,31 @@ CREATE POLICY "Users can delete dates of their own habits"
         )
     );
 
+-- 9. habits 테이블에 color 컬럼 추가 (습관별 색상 커스터마이징)
+-- 기존 테이블이 있는 경우를 위한 ALTER TABLE 구문
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'habits'
+        AND column_name = 'color'
+    ) THEN
+        ALTER TABLE public.habits
+        ADD COLUMN color TEXT NOT NULL DEFAULT '#FF6B4A';
+    END IF;
+END $$;
 
-
-
+-- color 컬럼에 대한 체크 제약 조건 추가 (유효한 hex 색상 형식만 허용)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'valid_color_format'
+    ) THEN
+        ALTER TABLE public.habits
+        ADD CONSTRAINT valid_color_format
+        CHECK (color ~ '^#[0-9A-Fa-f]{6}$');
+    END IF;
+END $$;
 

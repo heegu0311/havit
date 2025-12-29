@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { DEFAULT_HABIT_COLOR } from "@/constants/colors";
 
 export interface Habit {
   id: string;
   user_id: string;
   title: string;
+  color: string;
   created_at: string;
   updated_at: string;
 }
@@ -81,12 +83,16 @@ export function useHabits() {
   }, [user]);
 
   // Create habit
-  const createHabit = async (title: string) => {
+  const createHabit = async (title: string, color?: string) => {
     if (!user) throw new Error("User not authenticated");
 
     const { data, error } = await supabase
       .from("habits")
-      .insert([{ user_id: user.id, title }])
+      .insert([{
+        user_id: user.id,
+        title,
+        color: color || DEFAULT_HABIT_COLOR
+      }])
       .select()
       .single();
 
@@ -99,12 +105,18 @@ export function useHabits() {
   };
 
   // Update habit
-  const updateHabit = async (id: string, title: string) => {
+  const updateHabit = async (
+    id: string,
+    updates: { title?: string; color?: string }
+  ) => {
     if (!user) throw new Error("User not authenticated");
 
     const { data, error } = await supabase
       .from("habits")
-      .update({ title, updated_at: new Date().toISOString() })
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", id)
       .eq("user_id", user.id)
       .select()

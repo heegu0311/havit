@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { HabitTabs } from "./HabitTabs";
 import { CalendarHeader } from "./CalendarHeader";
 import { DesktopCalendarView } from "./DesktopCalendarView";
@@ -7,6 +8,7 @@ import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import { useCalendarInitialization } from "@/hooks/useCalendarInitialization";
+import { useHabitColor } from "@/hooks/useHabitColor";
 import { MAX_HABITS, AVAILABLE_YEARS } from "./types";
 
 /**
@@ -17,6 +19,7 @@ export default function LinearCalendar() {
     // Data
     habits,
     activeHabitId,
+    activeHabit,
     selectedDatesSet,
     selectedDatesCount,
 
@@ -37,6 +40,7 @@ export default function LinearCalendar() {
     // Handlers
     setActiveHabitId,
     handleTitleChange,
+    updateHabitColor,
     addHabit,
     deleteHabit,
     toggleDate,
@@ -52,6 +56,17 @@ export default function LinearCalendar() {
     // Utilities
     localDataString,
   } = useCalendarLogic();
+
+  // Get current habit color for CSS variable
+  const habitColor = useHabitColor(activeHabit);
+
+  // Handle color change
+  const handleColorChange = useCallback(
+    async (habitId: string, color: string) => {
+      await updateHabitColor(color);
+    },
+    [updateHabitColor]
+  );
 
   const { isInitialLoading } = useCalendarInitialization({
     authLoading: loading,
@@ -71,7 +86,10 @@ export default function LinearCalendar() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6">
+    <div
+      className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6"
+      style={{ "--habit-color": habitColor } as React.CSSProperties}
+    >
       <HabitTabs
         habits={habits}
         activeHabitId={activeHabitId}
@@ -79,6 +97,7 @@ export default function LinearCalendar() {
         onAddHabit={addHabit}
         onDeleteHabit={deleteHabit}
         onSignOut={signOut}
+        onColorChange={handleColorChange}
         maxHabits={MAX_HABITS}
       />
 
