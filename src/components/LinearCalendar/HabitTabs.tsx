@@ -1,4 +1,5 @@
-import { memo, useState, useRef, useEffect } from "react";
+import { memo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, LogOut, Palette } from "lucide-react";
 import { Habit } from "@/hooks/useHabits";
 import { ColorPicker } from "./ColorPicker";
@@ -28,16 +29,8 @@ function HabitTabsComponent({
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
   const paletteRefs = useRef<{ [key: string]: SVGSVGElement | null }>({});
 
-  // Debug: Log habits to check if color is present
-  useEffect(() => {
-    console.log("HabitTabs - habits:", habits);
-    habits.forEach((h) => {
-      console.log(`Habit ${h.title}: color = ${h.color}`);
-    });
-  }, [habits]);
-
   return (
-    <div className="flex justify-between gap-4 items-center mb-6 md:mb-10 print-hide overflow-x-auto scrollbar-hide">
+    <div className="sticky top-0 z-30 bg-white flex justify-between gap-4 items-center mb-6 md:mb-10 print-hide overflow-x-auto scrollbar-hide pb-2">
       {/* Habit Tabs */}
       <div className="flex-1 flex items-center gap-2 border-b-1 border-gray-200">
         {habits.map((habit, index) => (
@@ -119,46 +112,51 @@ function HabitTabsComponent({
       {/* Logout Button */}
       <button
         onClick={onSignOut}
-        className="flex items-center gap-2 px-4 py-2 border-0 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
+        className="sticky right-0 bg-white flex items-center gap-2 px-4 py-2 border-0 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
         title="로그아웃"
       >
         <LogOut className="w-3.5 h-3.5" />
         <span className="text-sm hidden md:inline">Logout</span>
       </button>
 
-      {/* Color Picker - Fixed Position */}
-      {showColorPicker && (
-        <>
-          {/* Backdrop to close picker */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowColorPicker(null)}
-          />
-
-          {/* Color Picker Dropdown */}
-          <div
-            className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50"
-            style={{
-              top: `${pickerPosition.top}px`,
-              left: `${pickerPosition.left}px`,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-sm text-gray-600 mb-3 font-medium">색상 선택:</p>
-            <ColorPicker
-              selectedColor={
-                habits.find((h) => h.id === showColorPicker)?.color || "#FF6B4A"
-              }
-              onColorChange={(color) => {
-                if (showColorPicker) {
-                  onColorChange(showColorPicker, color);
-                }
-                setShowColorPicker(null);
-              }}
+      {/* Color Picker - Portal */}
+      {showColorPicker &&
+        createPortal(
+          <>
+            {/* Backdrop to close picker */}
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={() => setShowColorPicker(null)}
             />
-          </div>
-        </>
-      )}
+
+            {/* Color Picker Dropdown */}
+            <div
+              className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-[9999]"
+              style={{
+                top: `${pickerPosition.top}px`,
+                left: `${pickerPosition.left}px`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-sm text-gray-600 mb-3 font-medium">
+                색상 선택:
+              </p>
+              <ColorPicker
+                selectedColor={
+                  habits.find((h) => h.id === showColorPicker)?.color ||
+                  "#FF6B4A"
+                }
+                onColorChange={(color) => {
+                  if (showColorPicker) {
+                    onColorChange(showColorPicker, color);
+                  }
+                  setShowColorPicker(null);
+                }}
+              />
+            </div>
+          </>,
+          document.body,
+        )}
     </div>
   );
 }
