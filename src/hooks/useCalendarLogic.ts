@@ -82,7 +82,7 @@ export function useCalendarLogic() {
 
     const timeoutId = setTimeout(checkRefsReady, 100);
     return () => clearTimeout(timeoutId);
-  }, [selectedYear]);
+  }, [selectedYear, activeHabitId]);
 
   // Set active habit when habits are loaded
   useEffect(() => {
