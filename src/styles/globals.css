@@ -191,7 +191,7 @@ html {
 
 body {
   background-color: #FFF5F0;
-  padding-top: max(env(safe-area-inset-top), 1rem);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: max(env(safe-area-inset-top));
+  overflow-y: hidden;
 }
 

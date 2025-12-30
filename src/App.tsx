@@ -22,7 +22,7 @@ export default function App() {
       <AuthProvider>
         <ClarityInitializer />
         <ProtectedRoute>
-          <div className="min-h-screen bg-[#FFF5F0] p-4 md:p-8">
+          <div className="px-4 md:px-8">
             <LinearCalendar />
           </div>
         </ProtectedRoute>

@@ -9,6 +9,7 @@ import { ErrorState } from "./ErrorState";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import { useCalendarInitialization } from "@/hooks/useCalendarInitialization";
 import { useHabitColor } from "@/hooks/useHabitColor";
+import { useIsPWA } from "@/hooks/useIsPWA";
 import { MAX_HABITS, AVAILABLE_YEARS } from "./types";
 
 /**
@@ -60,12 +61,15 @@ export default function LinearCalendar() {
   // Get current habit color for CSS variable
   const habitColor = useHabitColor(activeHabit);
 
+  // Detect PWA mode
+  const isPWA = useIsPWA();
+
   // Handle color change
   const handleColorChange = useCallback(
     async (habitId: string, color: string) => {
       await updateHabitColor(color);
     },
-    [updateHabitColor]
+    [updateHabitColor],
   );
 
   const { isInitialLoading } = useCalendarInitialization({
@@ -87,8 +91,14 @@ export default function LinearCalendar() {
 
   return (
     <div
-      className="max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-6"
-      style={{ "--habit-color": habitColor } as React.CSSProperties}
+      className={`max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-4 pt-0 overflow-y-auto ${
+        isPWA ? "max-h-[calc(100dvh-3.5rem)]" : "max-h-[calc(100dvh-1rem)]"
+      }`}
+      style={
+        {
+          "--habit-color": habitColor,
+        } as React.CSSProperties
+      }
     >
       <HabitTabs
         habits={habits}
