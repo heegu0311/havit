@@ -91,8 +91,8 @@ export default function LinearCalendar() {
 
   return (
     <div
-      className={`max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-4 pt-0 overflow-y-auto ${
-        isPWA ? "max-h-[calc(100dvh-3.5rem)]" : "max-h-[calc(100dvh-1rem)]"
+      className={`max-w-[1600px] mx-auto bg-white rounded-lg shadow-lg p-4 pt-0 mt-4 overflow-y-auto ${
+        isPWA ? "max-h-[calc(100dvh-3.5rem)]" : "max-h-[calc(100dvh-2rem)]"
       }`}
       style={
         {
