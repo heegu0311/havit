@@ -1,7 +1,7 @@
 {
-  "name": "Havit - 습관 추적 앱",
+  "name": "Havit - Habit Tracker",
   "short_name": "Havit",
-  "description": "매일 습관을 기록하고 성장하세요",
+  "description": "Track your daily habits and grow",
   "icons": [
     {
       "src": "/android-chrome-192x192.jpg",

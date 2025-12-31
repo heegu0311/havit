@@ -101,7 +101,7 @@ export function useCalendarLogic() {
         await updateHabit(activeHabitId, { title });
       } catch (error) {
         console.error("Error updating habit title:", error);
-        alert("습관 제목을 업데이트하는 중 오류가 발생했습니다.");
+        alert("An error occurred while updating the habit title.");
       }
     },
     [activeHabitId, updateHabit],
@@ -115,7 +115,7 @@ export function useCalendarLogic() {
         await updateHabit(activeHabitId, { color });
       } catch (error) {
         console.error("Error updating habit color:", error);
-        alert("습관 색상을 업데이트하는 중 오류가 발생했습니다.");
+        alert("An error occurred while updating the habit color.");
       }
     },
     [activeHabitId, updateHabit],
@@ -148,7 +148,7 @@ export function useCalendarLogic() {
       setActiveHabitId(newHabit.id);
     } catch (error) {
       console.error("Error creating habit:", error);
-      alert("새 습관을 생성하는 중 오류가 발생했습니다.");
+      alert("An error occurred while creating a new habit.");
     }
   }, [habits.length, createHabit]);
 
@@ -164,7 +164,7 @@ export function useCalendarLogic() {
         }
       } catch (error) {
         console.error("Error deleting habit:", error);
-        alert("습관을 삭제하는 중 오류가 발생했습니다.");
+        alert("An error occurred while deleting the habit.");
       }
     },
     [habits, activeHabitId, deleteHabitFromDB],
@@ -178,7 +178,7 @@ export function useCalendarLogic() {
         await toggleDateInDB(dateKey);
       } catch (error) {
         console.error("Error toggling date:", error);
-        alert("날짜를 업데이트하는 중 오류가 발생했습니다.");
+        alert("An error occurred while updating the date.");
       }
     },
     [selectedYear, toggleDateInDB],
@@ -200,7 +200,7 @@ export function useCalendarLogic() {
         await initializeMonthInDB(selectedYear, monthIndex);
       } catch (error) {
         console.error("Error initializing month:", error);
-        alert("월 데이터를 초기화하는 중 오류가 발생했습니다.");
+        alert("An error occurred while initializing month data.");
       }
     },
     [selectedYear, initializeMonthInDB],

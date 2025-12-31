@@ -5,7 +5,7 @@ import Clarity from "@microsoft/clarity";
 
 const ClarityInitializer = () => {
   useEffect(() => {
-    // 실제 Clarity 프로젝트 ID로 대체하세요.
+    // Replace with actual Clarity project ID.
     Clarity.init("ues68jf7z3");
   }, []);
   return <></>;

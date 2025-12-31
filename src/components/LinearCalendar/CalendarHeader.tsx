@@ -108,7 +108,7 @@ function CalendarHeaderComponent({
             ) : (
               <>
                 <Copy className="w-5 h-5" />
-                <span className="hidden md:inline">기존 데이터 복사</span>
+                <span className="hidden md:inline">Copy existing data</span>
               </>
             )}
           </button>
@@ -117,10 +117,10 @@ function CalendarHeaderComponent({
           <button
             onClick={onMigrateData}
             className="flex items-center gap-2 px-4 py-2 border-2 bg-[var(--habit-color)] text-white rounded-lg hover:opacity-90 transition-all duration-300"
-            title="기존 로컬스토리지 데이터를 서버에 저장하기"
+            title="Save existing localStorage data to server"
           >
             <Database className="w-5 h-5" />
-            <span className="hidden md:inline">기존 데이터 동기화</span>
+            <span className="hidden md:inline">Sync existing data</span>
           </button>
         </div>
       )}

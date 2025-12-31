@@ -113,7 +113,7 @@ function HabitTabsComponent({
       <button
         onClick={onSignOut}
         className="sticky right-0 bg-white flex items-center gap-2 px-4 py-2 border-0 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
-        title="로그아웃"
+        title="Sign out"
       >
         <LogOut className="w-3.5 h-3.5" />
         <span className="text-sm hidden md:inline">Logout</span>
@@ -139,7 +139,7 @@ function HabitTabsComponent({
               onClick={(e) => e.stopPropagation()}
             >
               <p className="text-sm text-gray-600 mb-3 font-medium">
-                색상 선택:
+                Select color:
               </p>
               <ColorPicker
                 selectedColor={

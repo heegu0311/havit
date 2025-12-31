@@ -19,9 +19,9 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>로그인 또는 회원가입</DialogTitle>
+          <DialogTitle>Sign in or Sign up</DialogTitle>
           <DialogDescription>
-            습관 추적 데이터를 안전하게 저장하고 동기화하세요.
+            Securely save and sync your habit tracking data.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4">
@@ -52,24 +52,24 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             localization={{
               variables: {
                 sign_in: {
-                  email_label: "이메일",
-                  password_label: "비밀번호",
-                  email_input_placeholder: "이메일을 입력하세요",
-                  password_input_placeholder: "비밀번호를 입력하세요",
-                  button_label: "로그인",
-                  loading_button_label: "로그인 중...",
-                  social_provider_text: "{{provider}}로 로그인",
-                  link_text: "이미 계정이 있으신가요? 로그인",
+                  email_label: "Email",
+                  password_label: "Password",
+                  email_input_placeholder: "Enter your email",
+                  password_input_placeholder: "Enter your password",
+                  button_label: "Sign in",
+                  loading_button_label: "Signing in...",
+                  social_provider_text: "Sign in with {{provider}}",
+                  link_text: "Already have an account? Sign in",
                 },
                 sign_up: {
-                  email_label: "이메일",
-                  password_label: "비밀번호",
-                  email_input_placeholder: "이메일을 입력하세요",
-                  password_input_placeholder: "비밀번호를 입력하세요",
-                  button_label: "회원가입",
-                  loading_button_label: "회원가입 중...",
-                  social_provider_text: "{{provider}}로 회원가입",
-                  link_text: "계정이 없으신가요? 회원가입",
+                  email_label: "Email",
+                  password_label: "Password",
+                  email_input_placeholder: "Enter your email",
+                  password_input_placeholder: "Enter your password",
+                  button_label: "Sign up",
+                  loading_button_label: "Signing up...",
+                  social_provider_text: "Sign up with {{provider}}",
+                  link_text: "Don't have an account? Sign up",
                 },
               },
             }}
