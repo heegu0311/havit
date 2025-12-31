@@ -23,6 +23,22 @@ function MobileCalendarViewComponent({
   isDateSelected,
   monthRefs,
 }: MobileCalendarViewProps) {
+  // Helper function to check if a date is within allowed range (2 days ago to today)
+  const isDateInAllowedRange = (monthIndex: number, day: number): boolean => {
+    const today = new Date();
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(today.getDate() - 2);
+
+    const targetDate = new Date(year, monthIndex, day);
+
+    // Reset time to compare only dates
+    today.setHours(23, 59, 59, 999);
+    twoDaysAgo.setHours(0, 0, 0, 0);
+    targetDate.setHours(12, 0, 0, 0);
+
+    return targetDate >= twoDaysAgo && targetDate <= today;
+  };
+
   return (
     <div className="md:hidden space-y-6">
       {MONTH_NAMES_SHORT.map((month, monthIndex) => {
@@ -74,6 +90,7 @@ function MobileCalendarViewComponent({
                 const isSelected = day
                   ? isDateSelected(monthIndex, day)
                   : false;
+                const isAllowed = day ? isDateInAllowedRange(monthIndex, day) : false;
 
                 const selectedShapeClasses = getSelectedShapeClasses(
                   monthDays,
@@ -83,8 +100,12 @@ function MobileCalendarViewComponent({
                   isDateSelected,
                 );
 
-                const baseClickable = day
+                const baseClickable = day && isAllowed
                   ? "cursor-pointer hover:bg-gray-100 transition-colors"
+                  : "";
+
+                const selectableBorder = day && isAllowed && !isSelected
+                  ? "border border-dashed border-gray-300"
                   : "";
 
                 const textColor = isSelected
@@ -98,12 +119,14 @@ function MobileCalendarViewComponent({
                 return (
                   <button
                     key={index}
-                    onClick={() => day && onToggleDate(monthIndex, day)}
+                    onClick={() => day && isAllowed && onToggleDate(monthIndex, day)}
+                    disabled={day ? !isAllowed : true}
                     className={[
                       "text-center py-3 text-sm",
                       baseClickable,
                       textColor,
                       isSelected ? "bg-[var(--habit-color)]" : "rounded-full",
+                      selectableBorder,
                       selectedShapeClasses,
                     ]
                       .filter(Boolean)
