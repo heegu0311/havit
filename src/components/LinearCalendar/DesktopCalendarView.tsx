@@ -70,9 +70,9 @@ function DesktopCalendarViewComponent({
           >
             {/* Month number */}
             <div
-              className="w-12 flex-shrink-0 text-[var(--habit-color)] text-3xl pr-4 cursor-pointer hover:opacity-70 transition-opacity no-print-click"
-              onClick={() => onInitializeMonth(monthIndex)}
-              title={`Click to fill/clear all days in ${MONTH_NAMES_SHORT[monthIndex]}`}
+              className="w-12 flex-shrink-0 text-[var(--habit-color)] text-3xl pr-4"
+              // onClick={() => onInitializeMonth(monthIndex)}
+              // title={`Click to fill/clear all days in ${MONTH_NAMES_SHORT[monthIndex]}`}
             >
               {monthIndex + 1}
             </div>

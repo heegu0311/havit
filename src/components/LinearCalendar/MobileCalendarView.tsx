@@ -55,9 +55,9 @@ function MobileCalendarViewComponent({
             {/* Month name and number */}
             <div className="flex items-center gap-3 mb-4">
               <span
-                className="text-[var(--habit-color)] text-3xl cursor-pointer hover:opacity-70 transition-opacity"
-                onClick={() => onInitializeMonth(monthIndex)}
-                title={`Click to fill/clear all days in ${month}`}
+                className="text-[var(--habit-color)] text-3xl"
+                // onClick={() => onInitializeMonth(monthIndex)}
+                // title={`Click to fill/clear all days in ${month}`}
               >
                 {monthIndex + 1}
               </span>
