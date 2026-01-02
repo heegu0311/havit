@@ -18,9 +18,14 @@ export function useHabitDates(habitId: string | null) {
   // Fetch habit dates
   useEffect(() => {
     if (!user || !habitId) {
+      setDates([]);
       setLoading(false);
       return;
     }
+
+    // Immediately clear dates when habitId changes
+    setDates([]);
+
     const fetchDates = async () => {
       try {
         setLoading(true);
