@@ -169,6 +169,9 @@ function HabitTabsComponent({
                   habits.find((h) => h.id === showColorPicker)?.color ||
                   "#FF6B4A"
                 }
+                usedColors={habits
+                  .filter((h) => h.id !== showColorPicker)
+                  .map((h) => h.color)}
                 onColorChange={(color) => {
                   if (showColorPicker) {
                     onColorChange(showColorPicker, color);
