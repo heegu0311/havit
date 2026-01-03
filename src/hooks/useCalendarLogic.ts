@@ -2,11 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHabits } from "./useHabits";
 import { useHabitDates } from "./useHabitDates";
+import { useMultiHabitDates } from "./useMultiHabitDates";
 import { formatDate } from "@/utils/calendar";
 import {
   copyHabitData as copyData,
   migrateLocalStorageData as migrateData,
 } from "@/utils/dataMigration";
+import { calculateHabitStats, HabitStats } from "@/utils/habitStats";
+
+export type ViewMode = "single" | "multi";
 
 /**
  * Centralized hook for all LinearCalendar business logic and state management
@@ -18,6 +22,7 @@ export function useCalendarLogic() {
   const [copiedData, setCopiedData] = useState(false);
   const [localTitle, setLocalTitle] = useState<string>("");
   const [activeHabitId, setActiveHabitId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("single");
 
   // Refs for DOM and debouncing
   // @ts-ignore
@@ -43,8 +48,26 @@ export function useCalendarLogic() {
     initializeMonth: initializeMonthInDB,
   } = useHabitDates(activeHabitId);
 
+  // Multi-habit data (only fetch when in multi view mode)
+  const habitIds = useMemo(() => habits.map((h) => h.id), [habits]);
+  const {
+    datesMap: multiHabitDatesMap,
+    loading: multiHabitDatesLoading,
+    getDateStringsForHabit,
+  } = useMultiHabitDates(viewMode === "multi" ? habitIds : []);
+
   // Get current active habit
   const activeHabit = habits.find((h) => h.id === activeHabitId);
+
+  // Calculate stats for all habits (for multi-habit view)
+  const habitStats = useMemo<HabitStats[]>(() => {
+    if (viewMode !== "multi") return [];
+
+    return habits.map((habit) => {
+      const dates = getDateStringsForHabit(habit.id);
+      return calculateHabitStats(habit.id, dates, selectedYear);
+    });
+  }, [viewMode, habits, multiHabitDatesMap, selectedYear, getDateStringsForHabit]);
 
   // Create a Set of selected dates for fast lookup
   const selectedDatesSet = useMemo(() => {
@@ -216,6 +239,12 @@ export function useCalendarLogic() {
     await migrateData(localStorageKey, createHabit);
   }, [localStorageKey, createHabit]);
 
+  // Switch to single habit view from multi-view (prevents flicker)
+  const switchToSingleHabit = useCallback((habitId: string) => {
+    setViewMode("single");
+    setActiveHabitId(habitId);
+  }, []);
+
   return {
     // Data
     habits,
@@ -225,10 +254,17 @@ export function useCalendarLogic() {
     selectedDatesSet,
     selectedDatesCount,
 
+    // Multi-habit data
+    viewMode,
+    setViewMode,
+    multiHabitDatesMap,
+    habitStats,
+
     // Loading & Errors
     loading,
     habitsLoading,
     datesLoading,
+    multiHabitDatesLoading,
     habitsError,
     habitsInitialLoadComplete,
 
@@ -243,6 +279,7 @@ export function useCalendarLogic() {
 
     // Handlers
     setActiveHabitId,
+    switchToSingleHabit,
     handleTitleChange,
     updateHabitColor,
     addHabit,
@@ -259,5 +296,6 @@ export function useCalendarLogic() {
 
     // Utilities
     localDataString,
+    getDateStringsForHabit,
   };
 }

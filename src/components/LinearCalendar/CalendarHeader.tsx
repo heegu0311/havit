@@ -65,7 +65,10 @@ function CalendarHeaderComponent({
                   }`}
                   style={
                     yr === selectedYear
-                      ? { backgroundColor: "color-mix(in srgb, var(--habit-color) 10%, white)" }
+                      ? {
+                          backgroundColor:
+                            "color-mix(in srgb, var(--habit-color) 10%, white)",
+                        }
                       : {}
                   }
                 >
@@ -96,7 +99,9 @@ function CalendarHeaderComponent({
             onClick={onCopyData}
             className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--habit-color)] text-[var(--habit-color)] rounded-lg transition-all duration-300"
             style={{
-              backgroundColor: copiedData ? "color-mix(in srgb, var(--habit-color) 10%, white)" : "transparent"
+              backgroundColor: copiedData
+                ? "color-mix(in srgb, var(--habit-color) 10%, white)"
+                : "transparent",
             }}
             title="Copy habit data to transfer between browsers"
           >
@@ -108,7 +113,7 @@ function CalendarHeaderComponent({
             ) : (
               <>
                 <Copy className="w-5 h-5" />
-                <span className="hidden md:inline">Copy existing data</span>
+                <span className="hidden md:inline">Copy</span>
               </>
             )}
           </button>
@@ -120,7 +125,7 @@ function CalendarHeaderComponent({
             title="Save existing localStorage data to server"
           >
             <Database className="w-5 h-5" />
-            <span className="hidden md:inline">Sync existing data</span>
+            <span className="hidden md:inline">Sync</span>
           </button>
         </div>
       )}

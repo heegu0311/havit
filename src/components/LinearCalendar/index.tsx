@@ -3,6 +3,9 @@ import { HabitTabs } from "./HabitTabs";
 import { CalendarHeader } from "./CalendarHeader";
 import { DesktopCalendarView } from "./DesktopCalendarView";
 import { MobileCalendarView } from "./MobileCalendarView";
+import { MultiHabitCalendarView } from "./MultiHabitCalendarView";
+import { MobileMultiHabitView } from "./MobileMultiHabitView";
+import { HabitStatsPanel } from "./HabitStatsPanel";
 import { CalendarFooter } from "./CalendarFooter";
 import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
@@ -24,6 +27,12 @@ export default function LinearCalendar() {
     selectedDatesSet,
     selectedDatesCount,
 
+    // Multi-habit data
+    viewMode,
+    setViewMode,
+    multiHabitDatesMap,
+    habitStats,
+
     // Loading & Errors
     loading,
     habitsLoading,
@@ -40,6 +49,7 @@ export default function LinearCalendar() {
 
     // Handlers
     setActiveHabitId,
+    switchToSingleHabit,
     handleTitleChange,
     updateHabitColor,
     addHabit,
@@ -103,12 +113,21 @@ export default function LinearCalendar() {
       <HabitTabs
         habits={habits}
         activeHabitId={activeHabitId}
+        viewMode={viewMode}
         onSelectHabit={setActiveHabitId}
+        onViewModeChange={setViewMode}
         onAddHabit={addHabit}
         onDeleteHabit={deleteHabit}
         onSignOut={signOut}
         onColorChange={handleColorChange}
         maxHabits={MAX_HABITS}
+      />
+
+      <HabitStatsPanel
+        habits={habits}
+        stats={habitStats}
+        viewMode={viewMode}
+        onSwitchToHabit={switchToSingleHabit}
       />
 
       <CalendarHeader
@@ -125,26 +144,58 @@ export default function LinearCalendar() {
         onMigrateData={migrateLocalStorageData}
       />
 
-      <DesktopCalendarView
-        year={selectedYear}
-        selectedDatesSet={selectedDatesSet}
-        onToggleDate={toggleDate}
-        onInitializeMonth={initializeMonth}
-        isDateSelected={isDateSelected}
-      />
+      {/* Single Habit View */}
+      {viewMode === "single" && (
+        <>
+          <DesktopCalendarView
+            year={selectedYear}
+            selectedDatesSet={selectedDatesSet}
+            onToggleDate={toggleDate}
+            onInitializeMonth={initializeMonth}
+            isDateSelected={isDateSelected}
+          />
 
-      <MobileCalendarView
-        year={selectedYear}
-        selectedDatesSet={selectedDatesSet}
-        onToggleDate={toggleDate}
-        onInitializeMonth={initializeMonth}
-        isDateSelected={isDateSelected}
-        monthRefs={mobileMonthRefs}
-      />
+          <MobileCalendarView
+            year={selectedYear}
+            selectedDatesSet={selectedDatesSet}
+            onToggleDate={toggleDate}
+            onInitializeMonth={initializeMonth}
+            isDateSelected={isDateSelected}
+            monthRefs={mobileMonthRefs}
+          />
+        </>
+      )}
+
+      {/* Multi-Habit View */}
+      {viewMode === "multi" && (
+        <>
+          <MultiHabitCalendarView
+            year={selectedYear}
+            habits={habits}
+            datesMap={multiHabitDatesMap}
+          />
+
+          <MobileMultiHabitView
+            year={selectedYear}
+            habits={habits}
+            datesMap={multiHabitDatesMap}
+          />
+        </>
+      )}
 
       <CalendarFooter
         year={selectedYear}
         selectedDatesCount={selectedDatesCount}
+        viewMode={viewMode}
+        habitCount={habits.length}
+        totalDatesCount={
+          viewMode === "multi"
+            ? Array.from(multiHabitDatesMap.values()).reduce(
+                (sum, dates) => sum + dates.length,
+                0
+              )
+            : selectedDatesCount
+        }
       />
 
       <style>{`

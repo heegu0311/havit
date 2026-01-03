@@ -1,13 +1,16 @@
 import { memo, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X, LogOut, Palette } from "lucide-react";
+import { Plus, X, LogOut, Palette, LayoutGrid } from "lucide-react";
 import { Habit } from "@/hooks/useHabits";
 import { ColorPicker } from "./ColorPicker";
+import { ViewMode } from "@/hooks/useCalendarLogic";
 
 interface HabitTabsProps {
   habits: Habit[];
   activeHabitId: string | null;
+  viewMode: ViewMode;
   onSelectHabit: (id: string) => void;
+  onViewModeChange: (mode: ViewMode) => void;
   onAddHabit: () => void;
   onDeleteHabit: (id: string) => void;
   onSignOut: () => void;
@@ -18,7 +21,9 @@ interface HabitTabsProps {
 function HabitTabsComponent({
   habits,
   activeHabitId,
+  viewMode,
   onSelectHabit,
+  onViewModeChange,
   onAddHabit,
   onDeleteHabit,
   onSignOut,
@@ -30,27 +35,45 @@ function HabitTabsComponent({
   const paletteRefs = useRef<{ [key: string]: SVGSVGElement | null }>({});
 
   return (
-    <div className="sticky top-0 z-30 bg-white flex justify-between gap-4 items-center mb-6 md:mb-10 print-hide overflow-x-auto scrollbar-hide pb-2">
+    <div className="sticky top-0 z-30 bg-white flex justify-between gap-4 items-center mb-2 print-hide overflow-x-auto scrollbar-hide pb-2">
       {/* Habit Tabs */}
       <div className="flex-1 flex items-center gap-2 border-b-1 border-gray-200">
+        {/* All Habits Tab (Multi-view) */}
+        <div
+          onClick={() => onViewModeChange("multi")}
+          className={`relative px-2 py-3 transition-all cursor-pointer flex items-center gap-2 ${
+            viewMode === "multi"
+              ? "border-b-2 border-gray-700 text-gray-700 -mb-[2px]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          title="View all habits together"
+        >
+          <LayoutGrid className="w-4 h-4" />
+          {/*<span className="whitespace-nowrap">Dashboard</span>*/}
+        </div>
+
+        {/* Individual Habit Tabs */}
         {habits.map((habit, index) => (
           <div
             key={habit.id}
-            onClick={() => onSelectHabit(habit.id)}
-            className={`relative px-6 py-3 transition-all cursor-pointer ${
-              activeHabitId === habit.id
+            onClick={() => {
+              onSelectHabit(habit.id);
+              onViewModeChange("single");
+            }}
+            className={`relative px-4 py-3 transition-all cursor-pointer ${
+              activeHabitId === habit.id && viewMode === "single"
                 ? "border-b-2 -mb-[2px]"
                 : "text-gray-500 hover:text-gray-700"
             }`}
             style={
-              activeHabitId === habit.id
+              activeHabitId === habit.id && viewMode === "single"
                 ? { color: habit.color, borderColor: habit.color }
                 : { color: habit.color }
             }
           >
             <span className="flex items-center gap-2 whitespace-nowrap">
               {habit.title || `Habit ${index + 1}`}
-              {activeHabitId === habit.id && (
+              {activeHabitId === habit.id && viewMode === "single" && (
                 <>
                   <Palette
                     ref={(el) => {
