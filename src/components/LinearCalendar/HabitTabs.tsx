@@ -106,7 +106,13 @@ function HabitTabsComponent({
                       className="w-4 h-4 hover:text-red-500"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDeleteHabit(habit.id);
+                        if (
+                          window.confirm(
+                            `"${habit.title || `Habit ${index + 1}`}" 습관을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 모든 기록이 삭제됩니다.`
+                          )
+                        ) {
+                          onDeleteHabit(habit.id);
+                        }
                       }}
                     />
                   )}
