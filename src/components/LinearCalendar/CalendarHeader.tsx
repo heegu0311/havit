@@ -7,6 +7,7 @@ interface CalendarHeaderProps {
   showYearDropdown: boolean;
   onToggleYearDropdown: (show: boolean) => void;
   availableYears: number[];
+  viewMode?: "single" | "multi";
   localTitle: string;
   onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onTitleBlur?: () => void;
@@ -22,6 +23,7 @@ function CalendarHeaderComponent({
   showYearDropdown,
   onToggleYearDropdown,
   availableYears,
+  viewMode = "single",
   localTitle,
   onTitleChange,
   onTitleBlur,
@@ -79,17 +81,19 @@ function CalendarHeaderComponent({
           )}
         </div>
 
-        {/* Habit Title Input */}
-        <div className="md:flex static md:absolute top-0 right-0 md:left-1/2 md:transform md:-translate-x-1/2">
-          <input
-            type="text"
-            value={localTitle}
-            onChange={onTitleChange}
-            onBlur={onTitleBlur}
-            placeholder="Enter habit here :)"
-            className="w-full text-2xl md:text-4xl text-center text-[var(--habit-color)] border-b-2 border-transparent hover:border-gray-200 focus:border-[var(--habit-color)] focus:outline-none transition-colors py-2 placeholder-gray-300"
-          />
-        </div>
+        {/* Habit Title Input - Only show in single habit view */}
+        {viewMode === "single" && (
+          <div className="md:flex static md:absolute top-0 right-0 md:left-1/2 md:transform md:-translate-x-1/2">
+            <input
+              type="text"
+              value={localTitle}
+              onChange={onTitleChange}
+              onBlur={onTitleBlur}
+              placeholder="Enter habit here :)"
+              className="w-full text-2xl md:text-4xl text-center text-[var(--habit-color)] border-b-2 border-transparent hover:border-gray-200 focus:border-[var(--habit-color)] focus:outline-none transition-colors py-2 placeholder-gray-300"
+            />
+          </div>
+        )}
       </div>
 
       {hasLocalData && (

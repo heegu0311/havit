@@ -136,6 +136,7 @@ export default function LinearCalendar() {
         showYearDropdown={showYearDropdown}
         onToggleYearDropdown={setShowYearDropdown}
         availableYears={AVAILABLE_YEARS}
+        viewMode={viewMode}
         localTitle={localTitle}
         onTitleChange={handleTitleChange}
         hasLocalData={!!localDataString}
